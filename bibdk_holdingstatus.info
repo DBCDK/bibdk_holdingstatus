@@ -1,0 +1,5 @@
+package = "Bibliotek.dk"
+dependencies[] = open_holdingstatus
+name = Bibliotek.dk holdingstatus
+description = Display the result of an OpenHoldingStatus request in Bibliotek.dk.
+core = 7.x

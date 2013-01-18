@@ -1,0 +1,136 @@
+<?php
+
+/**
+ * Implements hook_menu();
+ */
+function bibdk_holdingstatus_menu() {
+  $items['overlay/holdings/%'] = array(
+    'title' => t('Localisations', array(), array('context' => 'bibdk_holdingstatus')),
+    'page callback' => 'bibdk_holdingstatus_get_localisation',
+    'page arguments' => array(2),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+
+function bibdk_holdingstatus_get_localisation($pids) {
+  $ids = explode(',', $pids);
+  $localisations = open_holdingstatus_localisationRequest($ids);
+  $agencies = array();
+  foreach ($localisations as $pid) {
+    foreach ($pid as $localisation) {
+      $agencyId = $localisation['agencyId'];
+      $agencies[$agencyId] = $localisation;
+    }
+  }
+
+  $count_localisations = count($agencies);
+
+  foreach ($agencies as $agencyId => $agency) {
+
+    $client = new ting_client_class();
+    $response = $client->do_agency(
+      array(
+        'action'         => 'serviceRequest',
+        'agencyId'       => $agencyId,
+        'service'        => 'information',
+        'outputType'     => 'php',
+      )
+    );
+
+    bibdk_holdingstatus_handle_response(unserialize($response), $agencies, $agencyId);
+
+  }
+
+  /*
+  Københavns Biblioteker
+  Krystalgade 15
+  1172 København K
+  green Er hjemme - tjek afdeling:
+  Slå op i bibliotekets katalog for at få flere oplysninger om materialet
+  */
+
+  $output =  array(
+    'count_localisations' => array(
+      '#type' => 'markup',
+      '#markup' => '<p class="count-localisations">' . t("There are %n localisations:", array('%n' => $count_localisations), array('context' => 'bibdk_holdingstatus')) . '</p>',
+    ),
+    'note_localisations' => array(
+      '#type' => 'markup',
+      '#markup' => '<p class="note-localisations">' . t("NB! Send your reservation to the library, where you want to pick up the material.", array(), array('context' => 'bibdk_holdingstatus')) . '</p>',
+    ),
+    'list_agencies' => array(
+      '#items' => $agencies,
+      '#theme' => 'item_list',
+      '#attributes' => array(
+        'class' => array('list-agencies'),
+      ),
+    ),
+  );
+
+  return $output;
+
+}
+
+/**
+ * Handling the response (and errors)
+ * @param array $response
+ * @return array
+ */
+function bibdk_holdingstatus_handle_response($response, &$agencies, $agencyId) {
+
+  if ( isset($response->serviceResponse->_value->information->_value->agencyName->_value) ) {
+    $response = $response->serviceResponse->_value->information->_value;
+    $agencies[$agencyId]['branchId'] = $response->branchId ->_value;
+    $agencies[$agencyId]['agencyName'] = $response->agencyName->_value;
+    $agencies[$agencyId]['branchName'] = $response->branchName->_value;
+    $agencies[$agencyId]['postalAddress'] = $response->postalAddress->_value;
+    $agencies[$agencyId]['postalCode'] = $response->postalCode->_value;
+    $agencies[$agencyId]['city'] = $response->city->_value;
+    $agencies[$agencyId]['lookupUrl'] = _bibdk_holdingstatus_create_lookupUrl($response->lookupUrl->_value, $agencies[$agencyId]['localIdentifier']);
+    $agencies[$agencyId] = theme('localisation_agencies', array('agencies' => $agencies[$agencyId]));
+  }
+  else if (isset($response->error)) {
+    $error = $this->getValue($response->error);
+    drupal_set_message(t($error, array(), array('context' => 'bibdk_holdingstatus')), 'error');
+  }
+  else if (!isset($response->error) && !isset($response->serviceResponse->_value->information->_value->agencyName->_value)) {
+    $error = t('no_libraries_found_and_no_errors_reported');
+    drupal_set_message(t($error, array(), array('context' => 'bibdk_holdingstatus')), 'error');
+  }
+}
+
+
+function bibdk_holdingstatus_theme() {
+  return array(
+    'localisation_agencies' => array(
+      'template' => 'localisation-agencies',
+      'variables' => array('agencies' => null),
+    ),
+  );
+}
+
+
+/**
+ * Helper function: Creates render arrays for blocks
+ * @return array
+ */
+function _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $localIdentifier) {
+  if ( !$lookupUrl ) {
+    return array();
+  }
+  return array(
+      '#type' => 'link',
+      '#title' => '<span>' . t("Look up the material in the library catalog.", array(), array('context' => 'bibdk_holdingstatus')) . '</span>',
+      '#href' => ( strpos($lookupUrl, '_IDNR_') !== false ) ? str_replace('_IDNR_', $localIdentifier, $lookupUrl) : $lookupUrl . $localIdentifier ,
+      '#options' => array(
+        'html' => TRUE,
+      ),
+      '#attributes' => array(
+        'class'  => array('bibdk-popup-link', 'lookup-url'),
+        'rel'  => array('lookupUrl'),
+      ),
+  );
+}

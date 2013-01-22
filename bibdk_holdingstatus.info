@@ -1,4 +1,5 @@
 package = "Bibliotek.dk"
+core = 7.x
 dependencies[] = open_holdingstatus
 dependencies[] = bibdk_favourite
 name = Bibliotek.dk holdingstatus

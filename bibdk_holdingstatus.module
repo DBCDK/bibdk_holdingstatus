@@ -72,6 +72,8 @@ function bibdk_holdingstatus_get_localisation($pids) {
 
   }
 
+  $holdings = bibdk_holdingstatus_get_holdings($agencies, $pids);
+
   $output['errors'] = ( !$count_localisations ) ? array(
     '#items' => $error_messages,
     '#theme' => 'item_list',
@@ -109,6 +111,26 @@ function bibdk_holdingstatus_get_localisation($pids) {
 
   return $output;
 
+}
+
+function bibdk_holdingstatus_get_holdings($agencies, $pids){
+  $agencyIds[] = array_keys($agencies);
+  $pids = !is_array($pids) ? array($pids) : $pids;
+  $result = array();
+    foreach($pids as $pid){
+      $result = open_holdingstatus_holdingsRequest($agencyIds,$pid);
+    }
+    if (!isset($result))
+      return null;
+    foreach($result as $holdings){
+      $agencyId = $holdings->responderId->{'$'};
+      $pid = $holdings->pid->{'$'};
+      $holdingStatus[$agencyId][$pid] = array(
+        'willLend' => $holdings->willLend->{'$'},
+        'expectedDelivery' => $holdings->expectedDelivery->{'$'}
+      );
+    }
+    return $holdingStatus;
 }
 
 /**

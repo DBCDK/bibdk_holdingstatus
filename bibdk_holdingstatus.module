@@ -125,9 +125,9 @@ function bibdk_holdingstatus_handle_response($response, &$agencies, $agencyId) {
     $agencies[$agencyId]['postalAddress'] = $response->postalAddress->{'$'};
     $agencies[$agencyId]['postalCode'] = $response->postalCode->{'$'};
     $agencies[$agencyId]['city'] = $response->city->{'$'};
-    $lookupUrl = $response->lookupUrl->{'$'};
+    $lookupUrl = ( isset($response->lookupUrl->{'$'}) ) ? $response->lookupUrl->{'$'} : '';
     foreach ($agencies[$agencyId]['holdings'] as $pid => $holding) {
-      $agencies[$agencyId]['lookupUrl'][] = _bibdk_holdingstatus_create_lookupUrl($response->lookupUrl->{'$'}, $holding['localIdentifier'], $holding['note']);
+      $agencies[$agencyId]['lookupUrl'][] = _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $holding['localIdentifier'], $holding['note']);
     }
     $agencies[$agencyId] = theme('localisation_agencies', array('agencies' => $agencies[$agencyId]));
   }

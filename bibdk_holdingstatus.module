@@ -43,21 +43,19 @@ function bibdk_holdingstatus_get_localisation($pids) {
   $agencies = array();
   $error_messages = array();
 
-  if ( isset( $result['error_message']) ) {
-    $error_messages[] = $result['error_message'];
-  }
+  $count_localisations = ( isset($result['agencies']) ) ? count($result['agencies']) : 0;
 
-  $count_localisations = count($result['agencies']);
-
-  if ( !$count_localisations ) {
-    $error_messages = array_unique($error_messages);
+  if ( !$count_localisations && isset( $result['error_message']) ) {
+    $error_messages = array_unique($result['error_message']);
   }
 
   $page = pager_default_initialize($count_localisations, $num_per_page);
 
   $offset = $num_per_page * $page;
 
-  $agencies = array_slice($result['agencies'], $offset, $num_per_page, $preserve_keys=TRUE);
+  if ( $count_localisations ) {
+    $agencies = array_slice($result['agencies'], $offset, $num_per_page, $preserve_keys=TRUE);
+  }
 
   foreach ($agencies as $agencyId => $agency) {
 

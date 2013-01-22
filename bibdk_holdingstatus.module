@@ -31,6 +31,8 @@ function bibdk_holdingstatus_get_localisation($pids) {
   }
 
   $ids = explode(',', $pids);
+
+
   if ( $agency_id ) {
     $result = open_holdingstatus_localisationRequest($ids, $agency_id);
   }
@@ -41,19 +43,11 @@ function bibdk_holdingstatus_get_localisation($pids) {
   $agencies = array();
   $error_messages = array();
 
-  foreach ($result as $pid) {
-    if ( isset( $pid['error_message']) ) {
-      $error_messages[] = $pid['error_message'];
-    }
-    if ( isset( $pid['agencies']) ) {
-      foreach ($pid['agencies'] as $localisation) {
-        $agencyId = $localisation['agencyId'];
-        $agencies[$agencyId] = $localisation;
-      }
-    }
+  if ( isset( $result['error_message']) ) {
+    $error_messages[] = $result['error_message'];
   }
 
-  $count_localisations = count($agencies);
+  $count_localisations = count($result['agencies']);
 
   if ( !$count_localisations ) {
     $error_messages = array_unique($error_messages);
@@ -63,7 +57,7 @@ function bibdk_holdingstatus_get_localisation($pids) {
 
   $offset = $num_per_page * $page;
 
-  $agencies = array_slice($agencies, $offset, $num_per_page, $preserve_keys=TRUE);
+  $agencies = array_slice($result['agencies'], $offset, $num_per_page, $preserve_keys=TRUE);
 
   foreach ($agencies as $agencyId => $agency) {
 
@@ -73,10 +67,10 @@ function bibdk_holdingstatus_get_localisation($pids) {
         'action'         => 'serviceRequest',
         'agencyId'       => $agencyId,
         'service'        => 'information',
-        'outputType'     => 'php',
+        'outputType'     => 'json',
       )
     );
-    bibdk_holdingstatus_handle_response(unserialize($response), $agencies, $agencyId);
+    bibdk_holdingstatus_handle_response($response, $agencies, $agencyId);
 
   }
 
@@ -125,26 +119,28 @@ function bibdk_holdingstatus_get_localisation($pids) {
  * @return array
  */
 function bibdk_holdingstatus_handle_response($response, &$agencies, $agencyId) {
-
-  if ( isset($response->serviceResponse->_value->information->_value->agencyName->_value) ) {
-    $response = $response->serviceResponse->_value->information->_value;
-    $agencies[$agencyId]['branchId'] = $response->branchId ->_value;
-    $agencies[$agencyId]['agencyName'] = $response->agencyName->_value;
-    $agencies[$agencyId]['branchName'] = $response->branchName->_value;
-    $agencies[$agencyId]['postalAddress'] = $response->postalAddress->_value;
-    $agencies[$agencyId]['postalCode'] = $response->postalCode->_value;
-    $agencies[$agencyId]['city'] = $response->city->_value;
-    $agencies[$agencyId]['lookupUrl'] = _bibdk_holdingstatus_create_lookupUrl($response->lookupUrl->_value, $agencies[$agencyId]['localIdentifier']);
+  if ( isset($response->serviceResponse->information->agencyName->{'$'}) ) {
+    $response = $response->serviceResponse->information;
+    $agencies[$agencyId]['branchId'] = $response->branchId ->{'$'};
+    $agencies[$agencyId]['agencyName'] = $response->agencyName->{'$'};
+    $agencies[$agencyId]['branchName'] = $response->branchName->{'$'};
+    $agencies[$agencyId]['postalAddress'] = $response->postalAddress->{'$'};
+    $agencies[$agencyId]['postalCode'] = $response->postalCode->{'$'};
+    $agencies[$agencyId]['city'] = $response->city->{'$'};
+    $lookupUrl = $response->lookupUrl->{'$'};
+    foreach ($agencies[$agencyId]['holdings'] as $pid => $holding) {
+      $agencies[$agencyId]['lookupUrl'][] = _bibdk_holdingstatus_create_lookupUrl($response->lookupUrl->{'$'}, $holding['localIdentifier'], $holding['note']);
+    }
     $agencies[$agencyId] = theme('localisation_agencies', array('agencies' => $agencies[$agencyId]));
   }
   else if (isset($response->error)) {
     $error = $this->getValue($response->error);
     drupal_set_message(t($error, array(), array('context' => 'bibdk_holdingstatus')), 'error');
   }
-  else if (!isset($response->error) && isset($response->serviceResponse->_value->error->_value)) {
-    $agencies[$agencyId]['error'] = t($response->serviceResponse->_value->error->_value, array('context' => 'bibdk_holdingstatus'));
+  else if (!isset($response->error) && isset($response->serviceResponse->error->{'$'})) {
+    $agencies[$agencyId]['error'] = t($response->serviceResponse->error->{'$'}, array('context' => 'bibdk_holdingstatus'));
   }
-  else if (!isset($response->error) && !isset($response->serviceResponse->_value->information->_value->agencyName->_value)) {
+  else if (!isset($response->error) && !isset($response->serviceResponse->information->agencyName->{'$'})) {
     $error = t('no_libraries_found_and_no_errors_reported');
     drupal_set_message(t($error, array(), array('context' => 'bibdk_holdingstatus')), 'error');
   }
@@ -165,21 +161,34 @@ function bibdk_holdingstatus_theme() {
  * Helper function: Create render array for lookupUrl
  * @return array
  */
-function _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $localIdentifier) {
+function _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $localIdentifier, $note) {
   if ( !$lookupUrl ) {
     return array();
   }
   return array(
-      '#type' => 'link',
-      '#title' => '<span>' . t("Look up the material in the library catalog.", array(), array('context' => 'bibdk_holdingstatus')) . '</span>',
-      '#href' => ( strpos($lookupUrl, '_IDNR_') !== false ) ? str_replace('_IDNR_', $localIdentifier, $lookupUrl) : $lookupUrl . $localIdentifier ,
-      '#options' => array(
-        'html' => TRUE,
+    '#prefix' => '<p>',
+    '#suffix' => '</p>',
+    'lookup_url' => array(
+      '#type' => 'markup',
+      'link' => array(
+        '#type' => 'link',
+        '#title' => t("Look up the material in the library catalog.", array(), array('context' => 'bibdk_holdingstatus')),
+        '#href' => ( strpos($lookupUrl, '_IDNR_') !== false ) ? str_replace('_IDNR_', $localIdentifier, $lookupUrl) : $lookupUrl . $localIdentifier ,
+        '#options' => array(
+          'html' => TRUE,
+        ),
+        '#attributes' => array(
+          'class'  => array('bibdk-popup-link', 'lookup-url'),
+          'rel'  => array('lookupUrl'),
+        ),
       ),
-      '#attributes' => array(
-        'class'  => array('bibdk-popup-link', 'lookup-url'),
-        'rel'  => array('lookupUrl'),
-      ),
+      'note' => ( $note ) ? array(
+        '#prefix' => '<span>(',
+        '#type' => 'markup',
+        '#markup' => t($note, array(), array('context' => 'bibdk_holdingstatus')),
+        '#suffix' => ')</span>',
+      ) : NULL,
+    ),
   );
 }
 

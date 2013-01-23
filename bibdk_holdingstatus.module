@@ -57,23 +57,13 @@ function bibdk_holdingstatus_get_localisation($pids) {
     $agencies = array_slice($result['agencies'], $offset, $num_per_page, $preserve_keys=TRUE);
   }
 
-  foreach ($agencies as $agencyId => $agency) {
-
-    $client = new ting_client_class();
-    $response = $client->do_agency(
-      array(
-        'action'         => 'serviceRequest',
-        'agencyId'       => $agencyId,
-        'service'        => 'information',
-        'outputType'     => 'json',
-      )
-    );
-    bibdk_holdingstatus_handle_response($response, $agencies, $agencyId);
-
+  $holdings = bibdk_holdingstatus_get_holdings($agencies, $ids);
+  foreach ($agencies as $agencyId => $localization) {
+    $agency = new TingAgency($agencyId);
+    $information = $agency->getInformation();
+    $element = bibdk_holdingstatus_handle_response($information, $localization, $holdings[$agencyId]);
+    $render_agencies[$agencyId] = drupal_render($element);
   }
-
-  $holdings = bibdk_holdingstatus_get_holdings($agencies, $pids);
-
   $output['errors'] = ( !$count_localisations ) ? array(
     '#items' => $error_messages,
     '#theme' => 'item_list',
@@ -93,7 +83,7 @@ function bibdk_holdingstatus_get_localisation($pids) {
   ) : NULL;
 
   $output['list_localisations'] = array(
-    '#items' => $agencies,
+    '#items' => $render_agencies,
     '#theme' => 'item_list',
     '#attributes' => array(
       'class' => array('list-agencies'),
@@ -108,52 +98,64 @@ function bibdk_holdingstatus_get_localisation($pids) {
     ),
   );
 
-
   return $output;
 
 }
 
+/**
+ * Get holdingStatus for all agencies and all pids. Returns a render_array
+ * @param $agencies
+ * @param $pids
+ * @return array
+ */
 function bibdk_holdingstatus_get_holdings($agencies, $pids){
-  $agencyIds[] = array_keys($agencies);
+  $agencyIds = array_keys($agencies);
   $pids = !is_array($pids) ? array($pids) : $pids;
-  $result = array();
-    foreach($pids as $pid){
+  $items = array();
+  foreach($pids as $pid){
       $result = open_holdingstatus_holdingsRequest($agencyIds,$pid);
-    }
     if (!isset($result))
-      return null;
+      continue; // somekind of error should be logged
     foreach($result as $holdings){
-      $agencyId = $holdings->responderId->{'$'};
-      $pid = $holdings->pid->{'$'};
-      $holdingStatus[$agencyId][$pid] = array(
-        'willLend' => $holdings->willLend->{'$'},
-        'expectedDelivery' => $holdings->expectedDelivery->{'$'}
+      $holding = new BibdkHoldings($holdings);
+      $items[$holding->getResponderId()][$pid]['status'] = array(
+        '#type' => 'holding_status',
+        '#content' => $holding->message(),
+        '#status' => $holding->status(),
+        '#theme' => 'holding_status',
       );
     }
-    return $holdingStatus;
+  }
+  return $items;
 }
 
 /**
- * Handling the response (and errors)
- * @param array $response
+ * Handling the response
+ * @param TingClientAgencyInformation information
  * @return array
  */
-function bibdk_holdingstatus_handle_response($response, &$agencies, $agencyId) {
-  if ( isset($response->serviceResponse->information->agencyName->{'$'}) ) {
-    $response = $response->serviceResponse->information;
-    $agencies[$agencyId]['branchId'] = $response->branchId ->{'$'};
-    $agencies[$agencyId]['agencyName'] = $response->agencyName->{'$'};
-    $agencies[$agencyId]['branchName'] = $response->branchName->{'$'};
-    $agencies[$agencyId]['postalAddress'] = $response->postalAddress->{'$'};
-    $agencies[$agencyId]['postalCode'] = $response->postalCode->{'$'};
-    $agencies[$agencyId]['city'] = $response->city->{'$'};
-    $lookupUrl = ( isset($response->lookupUrl->{'$'}) ) ? $response->lookupUrl->{'$'} : '';
-    foreach ($agencies[$agencyId]['holdings'] as $pid => $holding) {
-      $agencies[$agencyId]['lookupUrl'][] = _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $holding['localIdentifier'], $holding['note']);
+function bibdk_holdingstatus_handle_response($information, $agency, $holdingstatus) {
+  if ( isset($information) ){
+    $lookupUrl = array();
+    foreach ($agency['holdings'] as $pid => $holding) {
+      $holdings[$pid]['lookupUrl'] = _bibdk_holdingstatus_create_lookupUrl($information->getLookupUrl(), $holding['localIdentifier'], $holding['note']);
+      $holdings[$pid]['status'] = $holdingstatus[$pid];
     }
-    $agencies[$agencyId] = theme('localisation_agencies', array('agencies' => $agencies[$agencyId]));
+
+    $elements = array(
+      '#theme' => 'localisation_agencies',
+      '#branchId' => $information->getBranchId(),
+      '#agencyName' => $information->getAgencyName(),
+      '#branchName' => $information->getBranchName(),
+      '#postalAddress' => $information->getPostalAddress(),
+      '#postalCode' => $information->getPostalCode(),
+      '#city' => $information->getCity(),
+      '#lookupUrl' => $holdings,
+    );
+    return $elements;
   }
-  else if (isset($response->error)) {
+  /** TODO: THIS NEEDS TO BE HANDLED
+  else if (isset($information)) {
     $error = $this->getValue($response->error);
     drupal_set_message(t($error, array(), array('context' => 'bibdk_holdingstatus')), 'error');
   }
@@ -163,7 +165,7 @@ function bibdk_holdingstatus_handle_response($response, &$agencies, $agencyId) {
   else if (!isset($response->error) && !isset($response->serviceResponse->information->agencyName->{'$'})) {
     $error = t('no_libraries_found_and_no_errors_reported');
     drupal_set_message(t($error, array(), array('context' => 'bibdk_holdingstatus')), 'error');
-  }
+  }*/
 }
 
 
@@ -171,7 +173,22 @@ function bibdk_holdingstatus_theme() {
   return array(
     'localisation_agencies' => array(
       'template' => 'localisation-agencies',
-      'variables' => array('agencies' => null),
+      'render element' => 'element',
+      'variables' => array(
+        'branchId' => '',
+        'agencyName' => '',
+        'branchName' => '',
+        'postalAddress' => '',
+        'postalCode' => '',
+        'city' => '',
+        'lookupUrl' => '',
+        'note' => '',
+        'error' => '',
+      ),
+    ),
+    'holding_status' => array(
+      'template' => 'holding-status',
+      'variables' => array('content' => '', 'status' => ''),
     ),
   );
 }

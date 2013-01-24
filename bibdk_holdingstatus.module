@@ -80,6 +80,7 @@ function bibdk_holdingstatus_get_localisation($pids) {
   }
 
   //$holdings = bibdk_holdingstatus_get_holdings($agencies, $ids);
+  $render_agencies = array();
   foreach ($agencies as $agencyId => $localization) {
     $agency = new TingAgency($agencyId);
     $information = $agency->getInformation();

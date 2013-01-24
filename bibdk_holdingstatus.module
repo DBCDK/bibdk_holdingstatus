@@ -61,10 +61,15 @@ function bibdk_holdingstatus_get_localisation($pids) {
   foreach ($agencies as $agencyId => $localization) {
     $agency = new TingAgency($agencyId);
     $information = $agency->getInformation();
-    $element = bibdk_holdingstatus_handle_response($information, $localization, $holdings[$agencyId]);
-    $render_agencies[$agencyId] = drupal_render($element);
+    if (!isset($information))
+      $error_messages[] = t('library_not_found');
+    else {
+      $holding = isset($holdings[$agencyId]) ? $holdings[$agencyId] : null;
+      $element = bibdk_holdingstatus_handle_response($information, $localization, $holding);
+      $render_agencies[$agencyId] = drupal_render($element);
+    }
   }
-  $output['errors'] = ( !$count_localisations ) ? array(
+  $output['errors'] = ( $error_messages ) ? array(
     '#items' => $error_messages,
     '#theme' => 'item_list',
     '#attributes' => array(
@@ -113,17 +118,12 @@ function bibdk_holdingstatus_get_holdings($agencies, $pids){
   $pids = !is_array($pids) ? array($pids) : $pids;
   $items = array();
   foreach($pids as $pid){
-      $result = open_holdingstatus_holdingsRequest($agencyIds,$pid);
-    if (!isset($result))
+      $results = open_holdingstatus_holdingsRequest($agencyIds,$pid);
+    if (!isset($results))
       continue; // somekind of error should be logged
-    foreach($result as $holdings){
-      $holding = new BibdkHoldings($holdings);
-      $items[$holding->getResponderId()][$pid]['status'] = array(
-        '#type' => 'holding_status',
-        '#content' => $holding->message(),
-        '#status' => $holding->status(),
-        '#theme' => 'holding_status',
-      );
+    foreach($results as $result){
+      $holding = new BibdkHoldings($result);
+      $items[$holding->getResponderId()][$pid] = $result;
     }
   }
   return $items;
@@ -134,14 +134,15 @@ function bibdk_holdingstatus_get_holdings($agencies, $pids){
  * @param TingClientAgencyInformation information
  * @return array
  */
-function bibdk_holdingstatus_handle_response($information, $agency, $holdingstatus) {
+function bibdk_holdingstatus_handle_response($information, $agency, $holdingstatus_results) {
   if ( isset($information) ){
     $lookupUrl = array();
+
     foreach ($agency['holdings'] as $pid => $holding) {
       $holdings[$pid]['lookupUrl'] = _bibdk_holdingstatus_create_lookupUrl($information->getLookupUrl(), $holding['localIdentifier'], $holding['note']);
-      $holdings[$pid]['status'] = $holdingstatus[$pid];
+      $holdingstatus_result = isset($holdingstatus_results[$pid]) ? $holdingstatus_results[$pid] : NULL;
+      $holdings[$pid]['status'] = bibdk_holdingstatus_status_display($holdingstatus_result);
     }
-
     $elements = array(
       '#theme' => 'localisation_agencies',
       '#branchId' => $information->getBranchId(),
@@ -154,20 +155,17 @@ function bibdk_holdingstatus_handle_response($information, $agency, $holdingstat
     );
     return $elements;
   }
-  /** TODO: THIS NEEDS TO BE HANDLED
-  else if (isset($information)) {
-    $error = $this->getValue($response->error);
-    drupal_set_message(t($error, array(), array('context' => 'bibdk_holdingstatus')), 'error');
-  }
-  else if (!isset($response->error) && isset($response->serviceResponse->error->{'$'})) {
-    $agencies[$agencyId]['error'] = t($response->serviceResponse->error->{'$'}, array('context' => 'bibdk_holdingstatus'));
-  }
-  else if (!isset($response->error) && !isset($response->serviceResponse->information->agencyName->{'$'})) {
-    $error = t('no_libraries_found_and_no_errors_reported');
-    drupal_set_message(t($error, array(), array('context' => 'bibdk_holdingstatus')), 'error');
-  }*/
 }
 
+function bibdk_holdingstatus_status_display($holdingstatus_result){
+  $holding = new BibdkHoldings($holdingstatus_result);
+  return array(
+    '#type' => 'holding_status',
+    '#content' => $holding->message(),
+    '#status' => $holding->status(),
+    '#theme' => 'holding_status',
+  );
+}
 
 function bibdk_holdingstatus_theme() {
   return array(

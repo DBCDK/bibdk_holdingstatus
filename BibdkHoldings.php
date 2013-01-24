@@ -28,7 +28,7 @@ class BibdkHoldings {
    * Check if material is home
    * @return bool
    */
-  private function isItHome() {
+  public function isItHome() {
     if (!$this->getExpectedDelivery()) {
       return false;
     }
@@ -62,7 +62,7 @@ class BibdkHoldings {
       return t('bibdk_holding_material_is_home');
     }
     else if (!$this->isItHome() && $this->getExpectedDelivery()) {
-      return t('bibdk_holding_material_will_be_home @date', array('@date' => format_date($this->getExpectedDelivery(), 'custom', 'm.d.Y')));
+      return t('bibdk_holding_material_will_be_home @date', array('@date' => format_date($this->getExpectedDelivery(), 'custom', 'd.m.Y')));
     }
     else if ($this->getErrorMessage()) {
       return t($this->getErrorMessage());

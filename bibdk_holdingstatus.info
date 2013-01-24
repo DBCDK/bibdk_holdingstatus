@@ -7,5 +7,5 @@ core = 7.x
 dependencies[] = open_holdingstatus
 dependencies[] = bibdk_favourite
 
-files[] = bibdkHoldings.php
-
+files[] = BibdkHoldings.php
+files[] = test/bibdk_holdingstatus.test

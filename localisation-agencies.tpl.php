@@ -1,5 +1,7 @@
 <div id="<?php print $branchId ?>" class="localisation-agency">
+<?php if ( $branchName != $agencyName ) { ?>
   <p class="branchName"><?php print $branchName; ?></p>
+<?php } ?>
   <p class="agencyName"><?php print $agencyName; ?></p>
   <p class="postalAddress"><?php print $postalAddress; ?></p>
   <p class="postalCode"><?php print $postalCode; ?></p>

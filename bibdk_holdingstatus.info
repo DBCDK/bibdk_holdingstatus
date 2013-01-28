@@ -1,5 +1,12 @@
-package = "Bibliotek.dk"
-dependencies[] = open_holdingstatus
 name = Bibliotek.dk holdingstatus
 description = Display the result of an OpenHoldingStatus request in Bibliotek.dk.
+version = 7.x-0.1
+
+package = "Bibliotek.dk"
 core = 7.x
+
+dependencies[] = open_holdingstatus
+dependencies[] = bibdk_favourite
+
+files[] = BibdkHoldings.php
+files[] = test/bibdk_holdingstatus.test

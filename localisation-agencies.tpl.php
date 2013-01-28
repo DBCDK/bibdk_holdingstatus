@@ -1,10 +1,13 @@
-
-<div id="<?php $agencies['branchId'] ?>" class="localisation-agency">
-  <p class="agencyName"><?php print $agencies['agencyName']; ?></p>
-  <p class="branchName"><?php print $agencies['branchName']; ?></p>
-  <p class="postalAddress"><?php print $agencies['postalAddress']; ?></p>
-  <p class="postalCode"><?php print $agencies['postalCode']; ?></p>
-  <p class="city"><?php print $agencies['city']; ?></p>
+<div id="<?php print $branchId ?>" class="localisation-agency">
+<?php if ( $branchName != $agencyName ) { ?>
+  <p class="branchName"><?php print $branchName; ?></p>
+<?php } ?>
+  <p class="agencyName"><?php print $agencyName; ?></p>
+  <p class="postalAddress"><?php print $postalAddress; ?></p>
+  <p class="postalCode"><?php print $postalCode; ?></p>
+  <p class="city"><?php print $city; ?></p>
   <p class="holdings visuallyhidden"></p>
-  <p class="lookupUrl"><?php echo drupal_render($agencies['lookupUrl']); ?></p>
+  <p class="lookupUrl"><?php echo drupal_render($lookupUrl); ?></p>
+  <p class="note"><?php print $note; ?></p>
+  <p class="note"><?php print $error; ?></p>
 </div>

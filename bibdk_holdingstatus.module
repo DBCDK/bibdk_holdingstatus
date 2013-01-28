@@ -11,62 +11,118 @@ function bibdk_holdingstatus_menu() {
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
+  $items['holdings/status'] = array(
+    'page callback' => 'bibdk_holdingstatus_get_status',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
+/**
+ * Ajax Callback function. Gets holding status for a material at a library
+ */
+function bibdk_holdingstatus_get_status(){
+  $lid = $_POST['lid'];
+  $pid = $_POST['pid'];
+
+  $holding = bibdk_holdingstatus_get_holdings($lid, $pid);
+  $display = bibdk_holdingstatus_status_display($holding[$lid][$pid]);
+
+  $return = array(
+    'pid' => $pid,
+    'lid' => $lid,
+    'data' => drupal_render($display),
+  );
+  drupal_json_output($return);
+}
 
 function bibdk_holdingstatus_get_localisation($pids) {
-  $ids = explode(',', $pids);
-  $localisations = open_holdingstatus_localisationRequest($ids);
-  $agencies = array();
-  foreach ($localisations as $pid) {
-    foreach ($pid as $localisation) {
-      $agencyId = $localisation['agencyId'];
-      $agencies[$agencyId] = $localisation;
+  global $user;
+  $agency_id = FALSE;
+  $num_per_page = 10;
+
+  // TO DO: Do this call as a hook? or method in ding_provider?
+  $favourites = _bibdk_favourite_get_from_webservice();
+  if ( !empty($favourites) ) {
+    foreach ($favourites as $bibnr => $favourite) {
+      if ( $favourite->orderAgency == TRUE) {
+        $agency_id = $bibnr;
+      }
     }
   }
 
-  $count_localisations = count($agencies);
+  $ids = explode(',', $pids);
 
-  foreach ($agencies as $agencyId => $agency) {
 
-    $client = new ting_client_class();
-    $response = $client->do_agency(
-      array(
-        'action'         => 'serviceRequest',
-        'agencyId'       => $agencyId,
-        'service'        => 'information',
-        'outputType'     => 'php',
-      )
-    );
-
-    bibdk_holdingstatus_handle_response(unserialize($response), $agencies, $agencyId);
-
+  if ( $agency_id ) {
+    $result = open_holdingstatus_localisationRequest($ids, $agency_id);
+  }
+  else {
+    $result = open_holdingstatus_localisationRequest($ids);
   }
 
-  /*
-  Københavns Biblioteker
-  Krystalgade 15
-  1172 København K
-  green Er hjemme - tjek afdeling:
-  Slå op i bibliotekets katalog for at få flere oplysninger om materialet
-  */
+  $agencies = array();
+  $error_messages = array();
 
-  $output =  array(
-    'count_localisations' => array(
-      '#type' => 'markup',
-      '#markup' => '<p class="count-localisations">' . t("There are %n localisations:", array('%n' => $count_localisations), array('context' => 'bibdk_holdingstatus')) . '</p>',
+  $count_localisations = ( isset($result['agencies']) ) ? count($result['agencies']) : 0;
+
+  if ( !$count_localisations && isset( $result['error_message']) ) {
+    $error_messages = array_unique($result['error_message']);
+  }
+
+  $page = pager_default_initialize($count_localisations, $num_per_page);
+
+  $offset = $num_per_page * $page;
+
+  if ( $count_localisations ) {
+    $agencies = array_slice($result['agencies'], $offset, $num_per_page, $preserve_keys=TRUE);
+  }
+
+  //$holdings = bibdk_holdingstatus_get_holdings($agencies, $ids);
+  $render_agencies = array();
+  foreach ($agencies as $agencyId => $localization) {
+    $agency = new TingAgency($agencyId);
+    $information = $agency->getInformation();
+    if (!isset($information))
+      $error_messages[] = t('library_not_found');
+    else {
+      //$holding = isset($holdings[$agencyId]) ? $holdings[$agencyId] : null;
+      $element = bibdk_holdingstatus_handle_response($information, $localization);
+      $render_agencies[$agencyId] = drupal_render($element);
+    }
+  }
+  $output['errors'] = ( $error_messages ) ? array(
+    '#items' => $error_messages,
+    '#theme' => 'item_list',
+    '#attributes' => array(
+      'class' => array('error-messages'),
     ),
-    'note_localisations' => array(
-      '#type' => 'markup',
-      '#markup' => '<p class="note-localisations">' . t("NB! Send your reservation to the library, where you want to pick up the material.", array(), array('context' => 'bibdk_holdingstatus')) . '</p>',
+  ) : NULL;
+
+  $output['count_localisations'] = ( $count_localisations ) ? array(
+    '#type' => 'markup',
+    '#markup' => '<p class="count-localisations">' . t("There are %n localisations", array('%n' => $count_localisations), array('context' => 'bibdk_holdingstatus')) . '</p>',
+  ) : NULL;
+
+  $output['note_localisations'] = ( $count_localisations ) ? array(
+    '#type' => 'markup',
+    '#markup' => '<p class="note-localisations">' . t("NB! Send your reservation to the library, where you want to pick up the material.", array(), array('context' => 'bibdk_holdingstatus')) . '</p>',
+  ) : NULL;
+
+  $output['list_localisations'] = array(
+    '#items' => $render_agencies,
+    '#theme' => 'item_list',
+    '#attributes' => array(
+      'class' => array('list-agencies'),
     ),
-    'list_agencies' => array(
-      '#items' => $agencies,
-      '#theme' => 'item_list',
-      '#attributes' => array(
-        'class' => array('list-agencies'),
-      ),
+  );
+
+  $output['pager_localisations'] = array(
+    '#type' => 'markup',
+    '#markup' => theme('pager'),
+    '#attributes' => array(
+      'class' => array('pager-agencies'),
     ),
   );
 
@@ -75,62 +131,132 @@ function bibdk_holdingstatus_get_localisation($pids) {
 }
 
 /**
- * Handling the response (and errors)
- * @param array $response
+ * Get holdingStatus for all agencies and all pids. Returns a render_array
+ * @param $agencies
+ * @param $pids
  * @return array
  */
-function bibdk_holdingstatus_handle_response($response, &$agencies, $agencyId) {
+function bibdk_holdingstatus_get_holdings($agencyIds, $pids){
+  $agencyIds = !is_array($agencyIds) ? array($agencyIds) : $agencyIds;
+  $pids = !is_array($pids) ? array($pids) : $pids;
+  $items = array();
+  foreach($pids as $pid){
+      $results = open_holdingstatus_holdingsRequest($agencyIds,$pid);
+    if (!isset($results))
+      continue; // somekind of error should be logged
+    foreach($results as $result){
+      $holding = new BibdkHoldings($result);
+      $items[$holding->getResponderId()][$pid] = $result;
+    }
+  }
+  return $items;
+}
 
-  if ( isset($response->serviceResponse->_value->information->_value->agencyName->_value) ) {
-    $response = $response->serviceResponse->_value->information->_value;
-    $agencies[$agencyId]['branchId'] = $response->branchId ->_value;
-    $agencies[$agencyId]['agencyName'] = $response->agencyName->_value;
-    $agencies[$agencyId]['branchName'] = $response->branchName->_value;
-    $agencies[$agencyId]['postalAddress'] = $response->postalAddress->_value;
-    $agencies[$agencyId]['postalCode'] = $response->postalCode->_value;
-    $agencies[$agencyId]['city'] = $response->city->_value;
-    $agencies[$agencyId]['lookupUrl'] = _bibdk_holdingstatus_create_lookupUrl($response->lookupUrl->_value, $agencies[$agencyId]['localIdentifier']);
-    $agencies[$agencyId] = theme('localisation_agencies', array('agencies' => $agencies[$agencyId]));
-  }
-  else if (isset($response->error)) {
-    $error = $this->getValue($response->error);
-    drupal_set_message(t($error, array(), array('context' => 'bibdk_holdingstatus')), 'error');
-  }
-  else if (!isset($response->error) && !isset($response->serviceResponse->_value->information->_value->agencyName->_value)) {
-    $error = t('no_libraries_found_and_no_errors_reported');
-    drupal_set_message(t($error, array(), array('context' => 'bibdk_holdingstatus')), 'error');
+/**
+ * Handling the response
+ * @param TingClientAgencyInformation information
+ * @return array
+ */
+function bibdk_holdingstatus_handle_response($information, $agency, $holdingstatus_results = null) {
+  if ( isset($information) ){
+    $lookupUrl = array();
+
+    foreach ($agency['holdings'] as $pid => $holding) {
+      $holdings[$pid]['lookupUrl'] = _bibdk_holdingstatus_create_lookupUrl($information->getLookupUrl(), $holding['localIdentifier'], $holding['note']);
+      //$holdingstatus_result = isset($holdingstatus_results[$pid]) ? $holdingstatus_results[$pid] : NULL;
+      $holdings[$pid]['status'] = array(
+        '#type' => 'fieldset',
+        '#attributes' => array(
+          'data-pid' => $pid,
+          'data-lid' => $information->getBranchId(),
+          'class' => array('holding-status-load'),
+        ),
+        '#attached' => array(
+          'js' => array(drupal_get_path('module', 'bibdk_holdingstatus') . '/js/bibdk_holdingstatus.js'),
+        ),
+      );
+    }
+    $elements = array(
+      '#theme' => 'localisation_agencies',
+      '#branchId' => $information->getBranchId(),
+      '#agencyName' => $information->getAgencyName(),
+      '#branchName' => $information->getBranchName(),
+      '#postalAddress' => $information->getPostalAddress(),
+      '#postalCode' => $information->getPostalCode(),
+      '#city' => $information->getCity(),
+      '#lookupUrl' => $holdings,
+    );
+    return $elements;
   }
 }
 
+function bibdk_holdingstatus_status_display($holdingstatus_result){
+  $holding = new BibdkHoldings($holdingstatus_result);
+  return array(
+    '#type' => 'holding_status',
+    '#content' => $holding->message(),
+    '#status' => $holding->status(),
+    '#theme' => 'holding_status',
+  );
+}
 
 function bibdk_holdingstatus_theme() {
   return array(
     'localisation_agencies' => array(
       'template' => 'localisation-agencies',
-      'variables' => array('agencies' => null),
+      'render element' => 'element',
+      'variables' => array(
+        'branchId' => '',
+        'agencyName' => '',
+        'branchName' => '',
+        'postalAddress' => '',
+        'postalCode' => '',
+        'city' => '',
+        'lookupUrl' => '',
+        'note' => '',
+        'error' => '',
+      ),
+    ),
+    'holding_status' => array(
+      'template' => 'holding-status',
+      'variables' => array('content' => '', 'status' => ''),
     ),
   );
 }
 
 
 /**
- * Helper function: Creates render arrays for blocks
+ * Helper function: Create render array for lookupUrl
  * @return array
  */
-function _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $localIdentifier) {
+function _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $localIdentifier, $note) {
   if ( !$lookupUrl ) {
     return array();
   }
   return array(
-      '#type' => 'link',
-      '#title' => '<span>' . t("Look up the material in the library catalog.", array(), array('context' => 'bibdk_holdingstatus')) . '</span>',
-      '#href' => ( strpos($lookupUrl, '_IDNR_') !== false ) ? str_replace('_IDNR_', $localIdentifier, $lookupUrl) : $lookupUrl . $localIdentifier ,
-      '#options' => array(
-        'html' => TRUE,
+    '#prefix' => '<p>',
+    '#suffix' => '</p>',
+    'lookup_url' => array(
+      '#type' => 'markup',
+      'link' => array(
+        '#type' => 'link',
+        '#title' => t("Look up the material in the library catalog.", array(), array('context' => 'bibdk_holdingstatus')),
+        '#href' => ( strpos($lookupUrl, '_IDNR_') !== false ) ? str_replace('_IDNR_', $localIdentifier, $lookupUrl) : $lookupUrl . $localIdentifier ,
+        '#options' => array(
+          'html' => TRUE,
+        ),
+        '#attributes' => array(
+          'class'  => array('bibdk-popup-link', 'lookup-url'),
+          'rel'  => array('lookupUrl'),
+        ),
       ),
-      '#attributes' => array(
-        'class'  => array('bibdk-popup-link', 'lookup-url'),
-        'rel'  => array('lookupUrl'),
-      ),
+      'note' => ( $note ) ? array(
+        '#prefix' => '<span>(',
+        '#type' => 'markup',
+        '#markup' => t($note, array(), array('context' => 'bibdk_holdingstatus')),
+        '#suffix' => ')</span>',
+      ) : NULL,
+    ),
   );
 }
+

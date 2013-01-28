@@ -7,3 +7,43 @@ function bibdk_holdingstatus_enable() {
 
 }
 
+/**
+ * Implements hook_ding_entity_fields
+ **/
+function bibdk_holdingstatus_ding_entity_fields() {
+  $display_full = array(
+    'reservation' => array(
+      'type' => 'hidden',
+    ),
+    'full' => array(
+      'type' => 'default',
+      'label' => 'hidden',
+    ),
+  );
+  return array(
+    'bibdk_holdingstatus_favourite' => array(
+      'field' => array(
+        'locked' => FALSE,
+        'storage' => array(
+          'type' => 'virtual_field',
+        ),
+      ),
+      'instance' => array(
+        'ding_entity_type' => 'bibdkManifestation',
+        'label' => t('Home at Favourite'),
+        'bundle' => 'bibdkManifestation',
+        'entity_type' => 'bibdkManifestation',
+        'display' => $display_full,
+      ),
+    ),
+  );
+
+
+}
+
+/**
+ * Add favourite link to manifestation entity
+ */
+function bibdk_holdingstatus_update_7001() {
+  ding_entity_modules_enabled(array('bibdk_holdingstatus'));
+}

@@ -3,10 +3,24 @@
 class BibdkHoldings {
 
   private $data;
+  private static $holdings;
 
   function __construct($holdingsResponse) {
     $this->data = $holdingsResponse;
   }
+
+  public static function setHoldings($holding, $pid, $lid) {
+    self::$holdings[$pid][$lid] = $holding;
+  }
+
+  static public function getHoldings($pid, $lid) {
+    return (isset(self::$holdings[$pid][$lid])) ? self::$holdings[$pid][$lid] : NULL;
+  }
+
+  static public function getAllHoldings() {
+    return self::$holdings;
+  }
+
 
   public function getResponderId() {
     return isset($this->data->responderId) ? $this->data->responderId->{'$'} : NULL;

@@ -1,5 +1,6 @@
 <?php
 
+module_load_include('inc', 'bibdk_holdingstatus', 'bibdk_holdingstatus.favorite');
 /**
  * Implements hook_menu();
  */
@@ -203,7 +204,7 @@ function bibdk_holdingstatus_status_display($holdingstatus_result){
 function bibdk_holdingstatus_theme() {
   return array(
     'localisation_agencies' => array(
-      'template' => 'localisation-agencies',
+      'template' => 'theme/localisation-agencies',
       'render element' => 'element',
       'variables' => array(
         'branchId' => '',
@@ -218,8 +219,16 @@ function bibdk_holdingstatus_theme() {
       ),
     ),
     'holding_status' => array(
-      'template' => 'holding-status',
+      'template' => 'theme/holding-status',
       'variables' => array('content' => '', 'status' => ''),
+    ),
+  'favourite_holdings' => array(
+      'template' => 'theme/favourite-holdings',
+      'variables' => array('library_name' => '', 'pid' => '', 'lid' => '', 'link' => ''),
+    ),
+  'bibdk_holdings_manifestation_field' => array(
+      'template' => 'theme/bibdk-holdings-manifestation-field',
+      'variables' => array('path' => '', 'link_text' => '', 'favourites' => array()),
     ),
   );
 }

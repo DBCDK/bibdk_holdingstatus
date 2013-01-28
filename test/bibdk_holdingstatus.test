@@ -1,0 +1,51 @@
+<?php
+class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
+
+  protected $requestResult;
+  /**
+   * @var BibdkHoldings
+   */
+  protected $holding;
+
+  public static function getInfo() {
+    return array(
+      'name' => t('Test of BibdkHoldings class'),
+      'description' => t('Test the essential methods'),
+      'group' => t('bibliotek.dk'),
+    );
+  }
+
+  public function setUp() {
+    $this->profile = 'minimal';
+    parent::setUp(array('open_holdingstatus', 'bibdk_holdingstatus'));
+    variable_set('open_holdingstatus_url', 'http://openholdingstatus.addi.dk/1.0/');
+  }
+
+  public function testWebservice() {
+    // No result
+    $holding = new BibdkHoldings(NULL);
+    $this->assertEqual('bibdk_holding_someting_went_wrong', $holding->message());
+    $this->assertEqual('red', $holding->status());
+    $this->assertFalse($holding->isItHome());
+    // Red light
+    $requestResult = open_holdingstatus_holdingsRequest(array('DK-870970'), '870970-basis:28542941');
+    $holding = new BibdkHoldings($requestResult[0]);
+    $this->assertEqual('service_not_supported_by_library', $holding->message());
+    $this->assertEqual('red', $holding->status());
+    $this->assertFalse($holding->isItHome());
+    // Yellow light
+    $requestResult = open_holdingstatus_holdingsRequest(array('715700'), '870970-basis:29317038');
+    $holding = new BibdkHoldings($requestResult[0]);
+    $this->assertEqual('bibdk_holding_material_will_be_home 18.04.2013', $holding->message());
+    $this->assertEqual('yellow', $holding->status());
+    $this->assertFalse($holding->isItHome());
+
+// green light
+    $requestResult = open_holdingstatus_holdingsRequest(array('DK-763000'), '870970-basis:06343570');
+    $holding = new BibdkHoldings($requestResult[0]);
+    $this->assertEqual('bibdk_holding_material_is_home', $holding->message());
+    $this->assertEqual('green', $holding->status());
+    $this->assertTrue($holding->isItHome());
+
+  }
+}

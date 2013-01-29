@@ -160,11 +160,8 @@ function bibdk_holdingstatus_get_holdings($agencyIds, $pids){
  */
 function bibdk_holdingstatus_handle_response($information, $agency, $holdingstatus_results = null) {
   if ( isset($information) ){
-    $lookupUrl = array();
 
     foreach ($agency['holdings'] as $pid => $holding) {
-      $holdings[$pid]['lookupUrl'] = _bibdk_holdingstatus_create_lookupUrl($information->getLookupUrl(), $holding['localIdentifier'], $holding['note']);
-      //$holdingstatus_result = isset($holdingstatus_results[$pid]) ? $holdingstatus_results[$pid] : NULL;
       $holdings[$pid]['status'] = array(
         '#type' => 'fieldset',
         '#attributes' => array(
@@ -176,6 +173,7 @@ function bibdk_holdingstatus_handle_response($information, $agency, $holdingstat
           'js' => array(drupal_get_path('module', 'bibdk_holdingstatus') . '/js/bibdk_holdingstatus.js'),
         ),
       );
+      $holdings[$pid]['lookupUrl'] = _bibdk_holdingstatus_create_lookupUrl($information->getLookupUrl(), $holding['localIdentifier'], $holding['note']);
     }
     $elements = array(
       '#theme' => 'localisation_agencies',
@@ -243,7 +241,7 @@ function _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $localIdentifier, $no
     return array();
   }
   return array(
-    '#prefix' => '<p>',
+    '#prefix' => '<p class="lookupUrl">',
     '#suffix' => '</p>',
     'lookup_url' => array(
       '#type' => 'markup',

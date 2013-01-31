@@ -164,7 +164,7 @@ function bibdk_holdingstatus_get_holdings($agencyIds, $pids){
 function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($ordered_subworks, $type_id, $subtype_id) {
   $lookup_pids = array_keys($ordered_subworks[$type_id][$subtype_id]['manifest']['manifestations']);
   $render = array(
-    'link' => array(
+    'localisations_link' => array(
       '#type' => 'link',
       '#title' => '<span class="icon icon-left icon-lightgrey-list">&nbsp;</span>' . t("See localisations for this material", array(), array('context' => 'ting_holdingstatus')),
       '#href' => "overlay/holdings/" . implode(',',$lookup_pids),

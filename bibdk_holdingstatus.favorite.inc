@@ -13,9 +13,7 @@ function bibdk_holdingstatus_show_manifestation_info_prerender($ids, $uid){
   }
 }
 
-function bibdk_holdingstatus_get_favorites($pid){
-  global $user;
-  $favourites = _bibdk_favourite_get_from_webservice();
+function bibdk_holdingstatus_get_holdings_for_favorites($pid, $favourites){
   if ( !empty($favourites) )
   {
     foreach($favourites as $agencyId => $favourite){
@@ -27,7 +25,7 @@ function bibdk_holdingstatus_get_favorites($pid){
           );
         }
     }
-    return $return;
+    return isset($return) ? $return : null;
   }
   return null;
 }
@@ -52,9 +50,9 @@ function bibdk_holdingstatus_field_info() {
  * Implements hook_field_load().
  */
 function bibdk_holdingstatus_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
-
+  $favourites = _bibdk_favourite_get_from_webservice();
   foreach ($entities as $id => $entity) {
-    $items[$id][]['favourite'] = bibdk_holdingstatus_get_favorites($id);
+    $items[$id][]['favourite'] = bibdk_holdingstatus_get_holdings_for_favorites($id, $favourites);
   }
 }
 

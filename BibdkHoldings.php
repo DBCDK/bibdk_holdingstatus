@@ -3,7 +3,7 @@
 class BibdkHoldings {
 
   private $data;
-  private static $holdings;
+  private static $holdings = array();
 
   function __construct($holdingsResponse) {
     $this->data = $holdingsResponse;
@@ -14,7 +14,7 @@ class BibdkHoldings {
   }
 
   static public function getHoldings($pid, $lid) {
-    return (isset(self::$holdings[$pid][$lid])) ? self::$holdings[$pid][$lid] : NULL;
+    return (isset(self::$holdings[$pid]) && isset(self::$holdings[$pid][$lid])) ? self::$holdings[$pid][$lid] : NULL;
   }
 
   static public function getAllHoldings() {

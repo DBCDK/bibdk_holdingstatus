@@ -24,8 +24,8 @@ function bibdk_holdingstatus_menu() {
  * Ajax Callback function. Gets holding status for a material at a library
  */
 function bibdk_holdingstatus_get_status(){
-  $lid = $_POST['lid'];
-  $pid = $_POST['pid'];
+  $lid = $_REQUEST['lid'];
+  $pid = $_REQUEST['pid'];
 
   $holding = bibdk_holdingstatus_get_holdings($lid, $pid);
   $display = bibdk_holdingstatus_status_display($holding[$lid][$pid]);

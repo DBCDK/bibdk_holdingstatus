@@ -1,0 +1,120 @@
+<?php
+
+class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
+
+  protected $requestResult;
+  /**
+   * @var BibdkHoldings
+   */
+  protected $holding;
+
+  public static function getInfo() {
+    return array(
+      'name' => t('Test BibdkHoldings module'),
+      'description' => t('Test the essential methods'),
+      'group' => t('bibliotek.dk'),
+    );
+  }
+
+  public function setUp() {
+    parent::setUp(array('open_holdingstatus', 'bibdk_holdingstatus', 'bibdk_favourite', 'ting_agency', 'ding_user', 'bibdk_test_provider'));
+    variable_set('open_holdingstatus_url', 'http://openholdingstatus.addi.dk/1.0/');
+    variable_set('agency_search_url', 'http://openagency.addi.dk/2.0/');
+
+  }
+  public function testRunner(){
+    $this->testBibdkHoldingsClass();
+    $this->testFavouriteHoldings();
+    $this->testInterface();
+  }
+
+  private function testBibdkHoldingsClass() {
+    // No result
+    $holding = new BibdkHoldings(NULL);
+    $this->assertEqual('bibdk_holding_someting_went_wrong', $holding->message());
+    $this->assertEqual('red', $holding->status());
+    $this->assertFalse($holding->isItHome());
+    // Red light
+    $requestResult = open_holdingstatus_holdingsRequest(array('DK-870970'), '870970-basis:28542941');
+    $holding = new BibdkHoldings($requestResult[0]);
+    $this->assertEqual('service_not_supported_by_library', $holding->message());
+    $this->assertEqual('red', $holding->status());
+    $this->assertFalse($holding->isItHome());
+    // Yellow light
+    $requestResult = open_holdingstatus_holdingsRequest(array('715700'), '870970-basis:29317038');
+    $holding = new BibdkHoldings($requestResult[0]);
+    $this->assertTrue(preg_match('@bibdk_holding_material_will_be_home@', $holding->message()), 'Holding message is returned');
+    $this->assertEqual('yellow', $holding->status());
+    $this->assertFalse($holding->isItHome());
+
+    // green light
+    $requestResult = open_holdingstatus_holdingsRequest(array('DK-763000'), '870970-basis:06343570');
+    $holding = new BibdkHoldings($requestResult[0]);
+    $this->assertEqual('bibdk_holding_material_is_home', $holding->message());
+    //$this->drupalGetAJAX()
+    $this->assertEqual('green', $holding->status());
+    $this->assertTrue($holding->isItHome());
+
+  }
+
+  private function testFavouriteHoldings () {
+    $ids = array('870970-basis:28542941', '870970-basis:28794932');
+    // Set holdings
+    bibdk_holdingstatus_show_manifestation_info_prerender($ids, null);
+    $holdings = BibdkHoldings::getAllHoldings();
+    $this->assertTrue(isset($holdings[$ids[0]]) && isset($holdings[$ids[1]]), 'Localisations have been saved on BibdkHoldings');
+
+    $favourites = array();
+    $holdings = bibdk_holdingstatus_get_holdings_for_favorites($ids, $favourites);
+    $this->assertNull($holdings, 'No Holdings when favourites are not set');
+    $favourites = array(
+      '830060' => new FavouriteAgency(array(
+        'oui:agencyId' => '830060',
+        'oui:userData' => null,
+        'oui:orderAgency' => false,
+      )),
+    );
+    $holdings = bibdk_holdingstatus_get_holdings_for_favorites($ids[1], $favourites);
+
+    // Check that holdings are set and returned only if favourite exists
+    $this->assertTrue(isset($holdings['830060']), 'favourite Holdings are returned');
+    $holdings = bibdk_holdingstatus_get_holdings_for_favorites($ids[0], $favourites);
+    $this->assertFalse(isset($holdings['830060']), 'favourite Holdings are not returned');
+  }
+
+  private function testInterface(){
+    global $user;
+    $this->drupalGet('overlay/holdings/870970-basis:28542941,870970-basis:28794932');
+    //Check if localisations are shown
+    $this->assertText('There are 47 localisations');
+    $this->assertText('Hovedbiblioteket, Krystalgade');
+    // Check if holdingstatus is shown
+    //$this->assertText('bibdk_holding_material_is_home');
+    //First location should not be favourit library - user is not logged in
+    $this->assertRaw('<li class="first"><div id="820010" class="localisation-agency">');
+    $user = $this->loginAsProviderUser();
+    $this->drupalGet('overlay/holdings/870970-basis:28542941,870970-basis:28794932');
+    //First location should be favourit library - user is logged in
+    $this->assertRaw('<li class="first"><div id="710100" class="localisation-agency">');
+    // Test get holding status via ajax
+    $this->drupalGetAJAX('holdings/status', array('query' => array('pid' => '870970-basis:28542941', 'lid' => '710100')));
+    $this->assertRaw('bibdk_holding_material_is_home');
+
+  }
+
+  private function loginAsProviderUser(){
+    $edit['name'] = 'testuser';
+    $edit['pass'] = 'password';
+    $this->drupalPost('user/login', $edit, t('Log in'), array(), array(), 'user-login', NULL);
+
+    $result = db_query('SELECT uid FROM {sessions} WHERE uid != 0');
+    $users = array();
+    foreach ($result as $row) {
+      $users[] = user_load($row->uid);
+    }
+    return $users[0];
+  }
+
+}
+
+

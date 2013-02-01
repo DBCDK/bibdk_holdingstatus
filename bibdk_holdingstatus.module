@@ -1,5 +1,6 @@
 <?php
 
+module_load_include('inc', 'bibdk_holdingstatus', 'bibdk_holdingstatus.favorite');
 /**
  * Implements hook_menu();
  */
@@ -23,8 +24,8 @@ function bibdk_holdingstatus_menu() {
  * Ajax Callback function. Gets holding status for a material at a library
  */
 function bibdk_holdingstatus_get_status(){
-  $lid = $_POST['lid'];
-  $pid = $_POST['pid'];
+  $lid = $_REQUEST['lid'];
+  $pid = $_REQUEST['pid'];
 
   $holding = bibdk_holdingstatus_get_holdings($lid, $pid);
   $display = bibdk_holdingstatus_status_display($holding[$lid][$pid]);
@@ -152,6 +153,36 @@ function bibdk_holdingstatus_get_holdings($agencyIds, $pids){
   return $items;
 }
 
+
+/**
+ * Implement hook_ting_openformat_subwork_materialtype_actions
+ * @param $ordered_subworks
+ * @param $type_id
+ * @param $subtype_id
+ * @return array
+ */
+function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($ordered_subworks, $type_id, $subtype_id) {
+  $lookup_pids = array_keys($ordered_subworks[$type_id][$subtype_id]['manifest']['manifestations']);
+  $render = array(
+    'localisations_link' => array(
+      '#type' => 'link',
+      '#title' => '<span class="icon icon-left icon-lightgrey-list">&nbsp;</span>' . t("See localisations for this material", array(), array('context' => 'ting_holdingstatus')),
+      '#href' => "overlay/holdings/" . implode(',',$lookup_pids),
+      '#options' => array(
+        'html' => TRUE,
+      ),
+      '#attributes' => array(
+        'class' => array('bibdk-popup-link', 'text-small', 'text-lightgrey'),
+        'rel' => 'holdings',
+      ),
+    ),
+  );
+  return $render;
+}
+
+
+
+
 /**
  * Handling the response
  * @param TingClientAgencyInformation information
@@ -159,11 +190,8 @@ function bibdk_holdingstatus_get_holdings($agencyIds, $pids){
  */
 function bibdk_holdingstatus_handle_response($information, $agency, $holdingstatus_results = null) {
   if ( isset($information) ){
-    $lookupUrl = array();
 
     foreach ($agency['holdings'] as $pid => $holding) {
-      $holdings[$pid]['lookupUrl'] = _bibdk_holdingstatus_create_lookupUrl($information->getLookupUrl(), $holding['localIdentifier'], $holding['note']);
-      //$holdingstatus_result = isset($holdingstatus_results[$pid]) ? $holdingstatus_results[$pid] : NULL;
       $holdings[$pid]['status'] = array(
         '#type' => 'fieldset',
         '#attributes' => array(
@@ -175,6 +203,7 @@ function bibdk_holdingstatus_handle_response($information, $agency, $holdingstat
           'js' => array(drupal_get_path('module', 'bibdk_holdingstatus') . '/js/bibdk_holdingstatus.js'),
         ),
       );
+      $holdings[$pid]['lookupUrl'] = _bibdk_holdingstatus_create_lookupUrl($information->getLookupUrl(), $holding['localIdentifier'], $holding['note']);
     }
     $elements = array(
       '#theme' => 'localisation_agencies',
@@ -203,7 +232,7 @@ function bibdk_holdingstatus_status_display($holdingstatus_result){
 function bibdk_holdingstatus_theme() {
   return array(
     'localisation_agencies' => array(
-      'template' => 'localisation-agencies',
+      'template' => 'theme/localisation-agencies',
       'render element' => 'element',
       'variables' => array(
         'branchId' => '',
@@ -218,8 +247,16 @@ function bibdk_holdingstatus_theme() {
       ),
     ),
     'holding_status' => array(
-      'template' => 'holding-status',
+      'template' => 'theme/holding-status',
       'variables' => array('content' => '', 'status' => ''),
+    ),
+  'favourite_holdings' => array(
+      'template' => 'theme/favourite-holdings',
+      'variables' => array('library_name' => '', 'pid' => '', 'lid' => '', 'link' => ''),
+    ),
+  'bibdk_holdings_manifestation_field' => array(
+      'template' => 'theme/bibdk-holdings-manifestation-field',
+      'variables' => array('path' => '', 'link_text' => '', 'favourites' => array()),
     ),
   );
 }
@@ -234,7 +271,7 @@ function _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $localIdentifier, $no
     return array();
   }
   return array(
-    '#prefix' => '<p>',
+    '#prefix' => '<p class="lookupUrl">',
     '#suffix' => '</p>',
     'lookup_url' => array(
       '#type' => 'markup',

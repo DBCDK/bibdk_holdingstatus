@@ -6,8 +6,7 @@
   <p class="postalAddress"><?php print $postalAddress; ?></p>
   <p class="postalCode"><?php print $postalCode; ?></p>
   <p class="city"><?php print $city; ?></p>
-  <p class="holdings visuallyhidden"></p>
-  <p class="lookupUrl"><?php echo drupal_render($lookupUrl); ?></p>
+  <?php echo drupal_render($lookupUrl); ?>
   <p class="note"><?php print $note; ?></p>
   <p class="note"><?php print $error; ?></p>
 </div>

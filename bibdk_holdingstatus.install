@@ -1,13 +1,6 @@
 <?php
 
 /**
- * Implements hook_enable().
- */
-function bibdk_holdingstatus_enable() {
-
-}
-
-/**
  * Implements hook_ding_entity_fields
  **/
 function bibdk_holdingstatus_ding_entity_fields() {
@@ -37,13 +30,11 @@ function bibdk_holdingstatus_ding_entity_fields() {
       ),
     ),
   );
-
-
 }
 
 /**
- * Add favourite link to manifestation entity
+ * Deprecated: Add favourite link to manifestation entity
  */
 function bibdk_holdingstatus_update_7001() {
-  ding_entity_modules_enabled(array('bibdk_holdingstatus'));
+
 }

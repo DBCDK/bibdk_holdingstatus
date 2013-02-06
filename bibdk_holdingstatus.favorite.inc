@@ -76,7 +76,6 @@ function bibdk_holdingstatus_field_formatter_info() {
 function bibdk_holdingstatus_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
   $favourites = _bibdk_favourite_get_from_webservice();
-  dpm($favourites);
   foreach ($items as $delta => $item) {
     if (isset($favourites))
       $item_favourites = bibdk_holdingstatus_get_holdings_for_favorites($item, $favourites);

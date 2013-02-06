@@ -50,9 +50,8 @@ function bibdk_holdingstatus_field_info() {
  * Implements hook_field_load().
  */
 function bibdk_holdingstatus_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
-  $favourites = _bibdk_favourite_get_from_webservice();
   foreach ($entities as $id => $entity) {
-    $items[$id][]['favourite'] = bibdk_holdingstatus_get_holdings_for_favorites($id, $favourites);
+    $items[$id][] = $id;
   }
 }
 
@@ -76,11 +75,15 @@ function bibdk_holdingstatus_field_formatter_info() {
  */
 function bibdk_holdingstatus_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
+  $favourites = _bibdk_favourite_get_from_webservice();
+  dpm($favourites);
   foreach ($items as $delta => $item) {
-    if ($item['favourite']){
-      $favourites['link_text'] = t('home_at_favourites');
-      $favourites['path'] = 'favourites';
-      foreach($item['favourite'] as $key => $favourite){
+    if (isset($favourites))
+      $item_favourites = bibdk_holdingstatus_get_holdings_for_favorites($item, $favourites);
+    if(isset($item_favourites)){
+      $fav['link_text'] = t('home_at_favourites');
+      $fav['path'] = 'favourites';
+      foreach($item_favourites  as $key => $favourite){
         $lookupUrl = $favourite['information']->getLookupUrl();
         $localIdentifier = $favourite['holding']['localIdentifier'];
         $item_list[] = theme('favourite_holdings', array(
@@ -90,7 +93,7 @@ function bibdk_holdingstatus_field_formatter_view($entity_type, $entity, $field,
           'link' =>  ( strpos($lookupUrl, '_IDNR_') !== false ) ? str_replace('_IDNR_', $localIdentifier, $lookupUrl) : $lookupUrl . $localIdentifier,
         ));
       }
-      $favourites['favourites'] = array(
+      $fav['favourites'] = array(
         '#theme' => 'item_list',
         '#items' => $item_list,
         '#attributes' => array(
@@ -100,7 +103,7 @@ function bibdk_holdingstatus_field_formatter_view($entity_type, $entity, $field,
           'js' => array(drupal_get_path('module', 'bibdk_holdingstatus') . '/js/bibdk_holdingstatus.js'),
         ),
       );
-    $element[$delta]['#markup'] = theme('bibdk_holdings_manifestation_field', $favourites);
+    $element[$delta]['#markup'] = theme('bibdk_holdings_manifestation_field', $fav);
     }
   }
   return $element;

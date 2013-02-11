@@ -5,23 +5,28 @@
  * Implements hook_show_manifestation_info_prerender
  */
 function bibdk_holdingstatus_show_manifestation_info_prerender($ids, $uid){
+  $favourites = _bibdk_favourite_get_from_webservice();
+  if (!isset($favourites) || count($favourites) == 0)
+    return;
   $localizations = open_holdingstatus_localisationRequest($ids);
   foreach($localizations['agencies'] as $lid => $holdings){
     foreach($holdings['holdings'] as $pid => $holding){
       BibdkHoldings::setHoldings($holding, $pid, $lid);
     }
   }
+  $information = bibdk_holdingstatus_get_agency_information($favourites);
+  BibdkHoldings::setAgencyInformation($information);
 }
 
-function bibdk_holdingstatus_get_holdings_for_favorites($pid, $favourites){
-  if ( !empty($favourites) )
+function bibdk_holdingstatus_get_holdings_for_favorites($pid, $informations){
+  if ( !empty($informations) )
   {
-    foreach($favourites as $agencyId => $favourite){
-        $holding = BibdkHoldings::getHoldings($pid, $agencyId);
+    foreach($informations as $agencyId => $information){
+        $holding = BibdkHoldings::getHoldings($pid, $information->getAgencyId());
         if (isset($holding)){
           $return[$agencyId] = array(
             'holding' => $holding,
-            'information' => $favourite->getInformation(),
+            'information' => $information,
           );
         }
     }
@@ -50,9 +55,8 @@ function bibdk_holdingstatus_field_info() {
  * Implements hook_field_load().
  */
 function bibdk_holdingstatus_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
-  $favourites = _bibdk_favourite_get_from_webservice();
   foreach ($entities as $id => $entity) {
-    $items[$id][]['favourite'] = bibdk_holdingstatus_get_holdings_for_favorites($id, $favourites);
+    $items[$id][] = $id;
   }
 }
 
@@ -71,16 +75,36 @@ function bibdk_holdingstatus_field_formatter_info() {
   );
 }
 
+/*
+ * get AgencyInformation from favourites
+ */
+function bibdk_holdingstatus_get_agency_information($favourites){
+  if ( !empty($favourites) )
+  {
+    foreach($favourites as $agencyId => $favourite){
+      $information = $favourite->getInformation();
+      if (isset($information)){
+        $return[$information->getAgencyId()] = $information;
+      }
+    }
+    return isset($return) ? $return : null;
+  }
+  return null;
+}
+
 /**
  * Implements hook_field_formatter_view().
  */
 function bibdk_holdingstatus_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
+  $information = BibdkHoldings::getAgencyInformation();
   foreach ($items as $delta => $item) {
-    if ($item['favourite']){
-      $favourites['link_text'] = t('home_at_favourites');
-      $favourites['path'] = 'favourites';
-      foreach($item['favourite'] as $key => $favourite){
+    if (isset($information))
+      $item_favourites = bibdk_holdingstatus_get_holdings_for_favorites($item, $information);
+    if(isset($item_favourites)){
+      $fav['link_text'] = t('home_at_favourites');
+      $fav['path'] = 'favourites';
+      foreach($item_favourites  as $key => $favourite){
         $lookupUrl = $favourite['information']->getLookupUrl();
         $localIdentifier = $favourite['holding']['localIdentifier'];
         $item_list[] = theme('favourite_holdings', array(
@@ -90,7 +114,7 @@ function bibdk_holdingstatus_field_formatter_view($entity_type, $entity, $field,
           'link' =>  ( strpos($lookupUrl, '_IDNR_') !== false ) ? str_replace('_IDNR_', $localIdentifier, $lookupUrl) : $lookupUrl . $localIdentifier,
         ));
       }
-      $favourites['favourites'] = array(
+      $fav['favourites'] = array(
         '#theme' => 'item_list',
         '#items' => $item_list,
         '#attributes' => array(
@@ -100,7 +124,7 @@ function bibdk_holdingstatus_field_formatter_view($entity_type, $entity, $field,
           'js' => array(drupal_get_path('module', 'bibdk_holdingstatus') . '/js/bibdk_holdingstatus.js'),
         ),
       );
-    $element[$delta]['#markup'] = theme('bibdk_holdings_manifestation_field', $favourites);
+    $element[$delta]['#markup'] = theme('bibdk_holdings_manifestation_field', $fav);
     }
   }
   return $element;

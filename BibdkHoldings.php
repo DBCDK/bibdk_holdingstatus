@@ -4,6 +4,7 @@ class BibdkHoldings {
 
   private $data;
   private static $holdings = array();
+  private static $agencyInformation = array();
 
   function __construct($holdingsResponse) {
     $this->data = $holdingsResponse;
@@ -21,6 +22,13 @@ class BibdkHoldings {
     return self::$holdings;
   }
 
+  public static function setAgencyInformation($agencyInformation) {
+    self::$agencyInformation = $agencyInformation;
+  }
+
+  public static function getAgencyInformation() {
+    return self::$agencyInformation;
+  }
 
   public function getResponderId() {
     return isset($this->data->responderId) ? $this->data->responderId->{'$'} : NULL;

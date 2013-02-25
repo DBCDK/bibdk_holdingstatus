@@ -162,6 +162,8 @@ function bibdk_holdingstatus_get_holdings($agencyIds, $pids){
  * @return array
  */
 function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($ordered_subworks, $type_id, $subtype_id) {
+  if (!isset($ordered_subworks[$type_id][$subtype_id]['manifest']['fields']['bibdk_sub_reservation_button']))
+    return;
   $lookup_pids = array_keys($ordered_subworks[$type_id][$subtype_id]['manifest']['manifestations']);
   $render = array(
     'localisations_link' => array(

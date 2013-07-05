@@ -35,46 +35,6 @@ function bibdk_holdingstatus_get_holdings_for_favorites($pid, $informations){
   return null;
 }
 
-
-/**
- * Implements hook_field_info().
- */
-function bibdk_holdingstatus_field_info() {
-  return array(
-    'bibdk_holdingstatus_favourite' => array(
-      'label' => t('Home at favourite.'),
-      'description' => t('check status of material at favourite library'),
-      'default_widget' => 'hidden',
-      'default_formatter' => 'bibdk_holdingstatus_favourite_default',
-      'no_ui' => TRUE,
-    ),
-  );
-}
-
-/**
- * Implements hook_field_load().
- */
-function bibdk_holdingstatus_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
-  foreach ($entities as $id => $entity) {
-    $items[$id][] = $id;
-  }
-}
-
-
-/**
- * Implements hook_field_formatter_info().
- */
-function bibdk_holdingstatus_field_formatter_info() {
-  return array(
-    'bibdk_holdingstatus_favourite_default' => array(
-      'label' => t('Default'),
-      'field types' => array(
-        'bibdk_holdingstatus_favourite',
-      ),
-    )
-  );
-}
-
 /*
  * get AgencyInformation from favourites
  */
@@ -92,41 +52,78 @@ function bibdk_holdingstatus_get_agency_information($favourites){
   return null;
 }
 
-/**
- * Implements hook_field_formatter_view().
+/** implements hook_ting_openformat_actions
+ * @param $type
+ * @param $entity
+ * @param $view_mode
+ * @param $langcode
+ * @return mixed
  */
-function bibdk_holdingstatus_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
-  $element = array();
-  $information = BibdkHoldings::getAgencyInformation();
-  foreach ($items as $delta => $item) {
-    if (isset($information))
-      $item_favourites = bibdk_holdingstatus_get_holdings_for_favorites($item, $information);
-    if(isset($item_favourites)){
-      $fav['link_text'] = t('home_at_favourites');
-      $fav['path'] = 'favourites';
-      foreach($item_favourites  as $key => $favourite){
-        $lookupUrl = $favourite['information']->getLookupUrl();
-        $localIdentifier = $favourite['holding']['localIdentifier'];
-        $item_list[] = theme('favourite_holdings', array(
-          'library_name' =>$favourite['information']->getAgencyName(),
-          'lid' => $key,
-          'pid' => $entity->id,
-          'link' =>  ( strpos($lookupUrl, '_IDNR_') !== false ) ? str_replace('_IDNR_', $localIdentifier, $lookupUrl) : $lookupUrl . $localIdentifier,
-        ));
-      }
-      $fav['favourites'] = array(
-        '#theme' => 'item_list',
-        '#items' => $item_list,
-        '#attributes' => array(
-          'class' => array('favourite-list', 'form-item'),
-        ),
-        '#attached' => array(
-          'js' => array(drupal_get_path('module', 'bibdk_holdingstatus') . '/js/bibdk_holdingstatus.js'),
-        ),
-      );
-    $element[$delta]['#markup'] = theme('bibdk_holdings_manifestation_field', $fav);
-    }
+function bibdk_holdingstatus_ting_openformat_actions($type, $entity, $view_mode, $langcode){
+  if ($type == 'bibdkManifestation'){
+    $actions['favourite_holdings'] = array(
+      '#markup' => bibdk_holdingstatus_holdings_for_favourites_view($entity->id),
+      '#weight' => 1,
+    );
+    return $actions;
   }
-  return $element;
 }
 
+/** generate view for favourite holdings
+ * @param $pid
+ * @return string
+ */
+function bibdk_holdingstatus_holdings_for_favourites_view($pid){
+  $information = BibdkHoldings::getAgencyInformation();
+  if (!isset($information))
+    return;
+
+   $item_list = _bibdk_holdingsstatus_favourite_item_list($pid, $information);
+
+  if (!isset($item_list))
+    return;
+
+  $fav['link_text'] = t('home_at_favourites');
+  $fav['path'] = 'favourites';
+  $fav['favourites'] = array(
+    '#theme' => 'item_list',
+    '#items' => $item_list,
+    '#attributes' => array(
+      'class' => array('favourite-list', 'form-item'),
+    ),
+    '#attached' => array(
+      'js' => array(drupal_get_path('module', 'bibdk_holdingstatus') . '/js/bibdk_holdingstatus.js'),
+    ),
+  );
+
+  return theme('bibdk_holdings_manifestation_field', $fav);
+
+}
+
+
+/** Helper function - generate item list for favourite holdings
+ * @param $pid
+ * @param $information
+ * @return array
+ */
+function _bibdk_holdingsstatus_favourite_item_list($pid, $information) {
+  $item_favourites = bibdk_holdingstatus_get_holdings_for_favorites($pid, $information);
+
+  if (!isset($item_favourites)) {
+    return;
+  }
+
+  $item_list = array();
+  foreach ($item_favourites as $key => $favourite) {
+    $lookupUrl = $favourite['information']->getLookupUrl();
+    $localIdentifier = $favourite['holding']['localIdentifier'];
+    $item_list[] = theme('favourite_holdings', array(
+      'library_name' => $favourite['information']->getAgencyName(),
+      'lid' => $key,
+      'pid' => $pid,
+      'link' => (strpos($lookupUrl, '_IDNR_') !== false) ? str_replace('_IDNR_', $localIdentifier, $lookupUrl) : $lookupUrl . $localIdentifier,
+    ));
+  }
+
+  return $item_list;
+}

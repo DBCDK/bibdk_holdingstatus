@@ -81,16 +81,16 @@ class BibdkHoldings {
    */
   public function message() {
     if ($this->getWillLend() && $this->isItHome()) {
-      return t('bibdk_holding_material_is_home');
+      return t('bibdk_holding_material_is_home', array(), array('context' => 'bibdk_holdingstatus'));
     }
     else if (!$this->isItHome() && $this->getExpectedDelivery()) {
-      return t('bibdk_holding_material_will_be_home @date', array('@date' => format_date($this->getExpectedDelivery(), 'custom', 'd.m.Y')));
+      return t('bibdk_holding_material_will_be_home @date', array('@date' => format_date($this->getExpectedDelivery(), 'custom', 'd.m.Y')), array('context' => 'bibdk_holdingstatus'));
     }
     else if ($this->getErrorMessage()) {
       return t($this->getErrorMessage());
     }
     else {
-      return t('bibdk_holding_someting_went_wrong');
+      return t('bibdk_holding_someting_went_wrong', array(), array('context' => 'bibdk_holdingstatus'));
     }
     return "";
   }

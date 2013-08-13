@@ -48,6 +48,13 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
     $this->assertEqual('yellow', $holding->status());
     $this->assertFalse($holding->isItHome());
 
+    // Note
+    $requestResult = open_holdingstatus_holdingsRequest(array('710100'), '870970-basis:20262710');
+    $holding = new BibdkHoldings($requestResult[0]);
+    $this->assertEqual('check_local_library', $holding->message());
+    $this->assertEqual('yellow', $holding->status());
+    $this->assertFalse($holding->isItHome());
+
     // green light
     $requestResult = open_holdingstatus_holdingsRequest(array('DK-763000'), '870970-basis:06343570');
     $holding = new BibdkHoldings($requestResult[0]);

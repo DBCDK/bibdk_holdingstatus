@@ -24,8 +24,9 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
   }
   public function testRunner(){
     $this->testBibdkHoldingsClass();
-    $this->testFavouriteHoldings();
     $this->testInterface();
+    $this->testFavouriteHoldings();
+
   }
 
   private function testBibdkHoldingsClass() {
@@ -86,7 +87,7 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
     global $user;
     $this->drupalGet('overlay/holdings/870970-basis:28542941,870970-basis:28794932');
     //Check if localisations are shown
-    $this->assertText('There are 47 localisations');
+    $this->assertText('There are 45 localisations');
     $this->assertText('Hovedbiblioteket, Krystalgade');
     // Check if holdingstatus is shown
     //$this->assertText('bibdk_holding_material_is_home');

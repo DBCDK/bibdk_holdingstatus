@@ -184,8 +184,6 @@ function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($order
 }
 
 
-
-
 /**
  * Handling the response
  * @param TingClientAgencyInformation information
@@ -212,7 +210,6 @@ function bibdk_holdingstatus_handle_response($information, $agency, $holdingstat
       '#theme' => 'localisation_agencies',
       '#branchId' => $information->getBranchId(),
       '#agencyName' => $information->getAgencyName(),
-      '#branchName' => $information->getBranchName(),
       '#postalAddress' => $information->getPostalAddress(),
       '#postalCode' => $information->getPostalCode(),
       '#city' => $information->getCity(),

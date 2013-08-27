@@ -24,8 +24,9 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
   }
   public function testRunner(){
     $this->testBibdkHoldingsClass();
-    $this->testFavouriteHoldings();
     $this->testInterface();
+    $this->testFavouriteHoldings();
+
   }
 
   private function testBibdkHoldingsClass() {
@@ -44,6 +45,13 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
     $requestResult = open_holdingstatus_holdingsRequest(array('715700'), '870970-basis:29317038');
     $holding = new BibdkHoldings($requestResult[0]);
     $this->assertTrue(preg_match('@bibdk_holding_material_will_be_home@', $holding->message()), 'Holding message is returned');
+    $this->assertEqual('yellow', $holding->status());
+    $this->assertFalse($holding->isItHome());
+
+    // Note
+    $requestResult = open_holdingstatus_holdingsRequest(array('710100'), '870970-basis:20262710');
+    $holding = new BibdkHoldings($requestResult[0]);
+    $this->assertEqual('check_local_library', $holding->message());
     $this->assertEqual('yellow', $holding->status());
     $this->assertFalse($holding->isItHome());
 
@@ -86,7 +94,7 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
     global $user;
     $this->drupalGet('overlay/holdings/870970-basis:28542941,870970-basis:28794932');
     //Check if localisations are shown
-    $this->assertText('There are 47 localisations');
+    $this->assertText('There are 45 localisations');
     $this->assertText('Hovedbiblioteket, Krystalgade');
     // Check if holdingstatus is shown
     //$this->assertText('bibdk_holding_material_is_home');

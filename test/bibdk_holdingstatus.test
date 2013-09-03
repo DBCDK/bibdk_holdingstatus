@@ -10,16 +10,16 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
 
   public static function getInfo() {
     return array(
-      'name' => t('Test BibdkHoldings module'),
+      'name' => t('Test bibdk_holdingstatus module'),
       'description' => t('Test the essential methods'),
-      'group' => t('bibliotek.dk'),
+      'group' => t('Bibliotek.dk - Holdingstatus'),
     );
   }
 
   public function setUp() {
     parent::setUp(array('open_holdingstatus', 'bibdk_holdingstatus', 'bibdk_favourite', 'ting_agency', 'ding_user', 'bibdk_test_provider'));
     variable_set('open_holdingstatus_url', 'http://openholdingstatus.addi.dk/1.0/');
-    variable_set('agency_search_url', 'http://openagency.addi.dk/2.0/');
+    variable_set('agency_search_url', 'http://openagency.addi.dk/2.6/');
 
   }
   public function testRunner(){
@@ -95,7 +95,7 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
     $this->drupalGet('overlay/holdings/870970-basis:28542941,870970-basis:28794932');
     //Check if localisations are shown
     $this->assertText('There are 45 localisations');
-    $this->assertText('Hovedbiblioteket, Krystalgade');
+    $this->assertText('Statsbiblioteket');
     // Check if holdingstatus is shown
     //$this->assertText('bibdk_holding_material_is_home');
     //First location should not be favourit library - user is not logged in

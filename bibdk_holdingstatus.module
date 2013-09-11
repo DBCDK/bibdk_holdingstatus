@@ -175,7 +175,7 @@ function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($order
       ),
       '#attributes' => array(
         'class' => array('bibdk-popup-link', 'text-small', 'text-lightgrey','clearfix'),
-        'rel' => 'holdings',
+        'data-rel' => 'holdings',
       ),
       '#weight'=>-1,
     ),

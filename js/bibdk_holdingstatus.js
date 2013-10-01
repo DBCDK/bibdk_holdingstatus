@@ -31,7 +31,6 @@
                 Drupal.loadHoldingStatus(element);
             });
             $('.load-holdings', context).click(function(e){
-                $('.popover').addClass('visuallyhidden');
                 $(this).siblings().find('.holding-status-element').each(function (i, element) {
                     $(element).removeClass('holding-status-element').addClass('holding-status-load');
                     Drupal.loadHoldingStatus(element);

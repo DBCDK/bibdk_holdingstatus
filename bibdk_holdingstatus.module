@@ -161,7 +161,7 @@ function bibdk_holdingstatus_get_holdings($agencyIds, $pids) {
  * @param $ordered_subworks
  * @param $type_id
  * @param $subtype_id
- * @param $subWork
+ * @param $subWork BibdkSubwork
  * @return array
  */
 function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($ordered_subworks, $type_id, $subtype_id, $subWork) {
@@ -180,6 +180,9 @@ function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($order
           'text-small',
           'text-lightgrey',
           'clearfix'
+        ),
+        'id' => array(
+          'selid-' . drupal_html_id(reset($lookup_pids)),
         ),
         'data-rel' => 'holdings',
       ),

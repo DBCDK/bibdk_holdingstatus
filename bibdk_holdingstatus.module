@@ -54,7 +54,6 @@ function bibdk_holdingstatus_get_localisation($pids) {
 
   $ids = explode(',', $pids);
 
-
   if ($agency_id) {
     $result = open_holdingstatus_localisationRequest($ids, $agency_id);
   }
@@ -133,7 +132,8 @@ function bibdk_holdingstatus_get_localisation($pids) {
 
 /**
  * Get holdingStatus for all agencies and all pids. Returns a render_array
- * @param $agencies
+ *
+ * @param $agencyIds
  * @param $pids
  * @return array
  */
@@ -157,14 +157,14 @@ function bibdk_holdingstatus_get_holdings($agencyIds, $pids) {
 
 /**
  * Implement hook_ting_openformat_subwork_materialtype_actions
+ *
  * @param $ordered_subworks
  * @param $type_id
  * @param $subtype_id
+ * @param $subWork
  * @return array
  */
 function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($ordered_subworks, $type_id, $subtype_id, $subWork) {
-  /*if (!isset($ordered_subworks[$type_id][$subtype_id]['manifest']['fields']['bibdk_sub_reservation_button']))
-    return;*/
   $lookup_pids = $subWork->getHostPublicationID();
   $render = array(
     'localisations_link' => array(
@@ -192,7 +192,10 @@ function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($order
 
 /**
  * Handling the response
- * @param TingClientAgencyInformation information
+ *
+ * @param $information
+ * @param $agency
+ * @param null $holdingstatus_results
  * @return array
  */
 function bibdk_holdingstatus_handle_response($information, $agency, $holdingstatus_results = NULL) {
@@ -279,6 +282,10 @@ function bibdk_holdingstatus_theme() {
 
 /**
  * Helper function: Create render array for lookupUrl
+ *
+ * @param $lookupUrl
+ * @param $localIdentifier
+ * @param $note
  * @return array
  */
 function _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $localIdentifier, $note) {

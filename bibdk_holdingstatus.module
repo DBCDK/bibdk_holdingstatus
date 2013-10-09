@@ -39,7 +39,6 @@ function bibdk_holdingstatus_get_status(){
 }
 
 function bibdk_holdingstatus_get_localisation($pids) {
-  global $user;
   $agency_id = FALSE;
   $num_per_page = 10;
 

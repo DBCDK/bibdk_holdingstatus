@@ -5,7 +5,7 @@
  * Implements hook_show_manifestation_info_prerender
  */
 function bibdk_holdingstatus_show_manifestation_info_prerender($ids, $uid) {
-  $favourites = _bibdk_favourite_get_from_webservice();
+  $favourites = bibdk_favourite_get_favourites();
   if (!isset($favourites) || count($favourites) == 0)
     return;
   $information = bibdk_holdingstatus_get_agency_information($favourites);

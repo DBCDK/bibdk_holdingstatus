@@ -4,31 +4,20 @@
 /**
  * Implements hook_show_manifestation_info_prerender
  */
-function bibdk_holdingstatus_show_manifestation_info_prerender($ids, $uid){
+function bibdk_holdingstatus_show_manifestation_info_prerender($ids, $uid) {
   $favourites = _bibdk_favourite_get_from_webservice();
   if (!isset($favourites) || count($favourites) == 0)
     return;
-  $localizations = open_holdingstatus_localisationRequest($ids);
-  foreach($localizations['agencies'] as $lid => $holdings){
-    foreach($holdings['holdings'] as $pid => $holding){
-      BibdkHoldings::setHoldings($holding, $pid, $lid);
-    }
-  }
   $information = bibdk_holdingstatus_get_agency_information($favourites);
   BibdkHoldings::setAgencyInformation($information);
 }
 
-function bibdk_holdingstatus_get_holdings_for_favorites($pid, $informations){
-  if ( !empty($informations) )
-  {
-    foreach($informations as $agencyId => $information){
-        $holding = BibdkHoldings::getHoldings($pid, $information->getAgencyId());
-        if (isset($holding)){
-          $return[$agencyId] = array(
-            'holding' => $holding,
-            'information' => $information,
-          );
-        }
+function bibdk_holdingstatus_get_holdings_for_favorites($pid, $informations) {
+  if (!empty($informations)) {
+    foreach ($informations as $agencyId => $information) {
+      $return[$agencyId] = array(
+        'information' => $information,
+      );
     }
     return isset($return) ? $return : null;
   }
@@ -75,6 +64,7 @@ function bibdk_holdingstatus_ting_openformat_actions($type, $entity, $view_mode,
  */
 function bibdk_holdingstatus_holdings_for_favourites_view($pid){
   $information = BibdkHoldings::getAgencyInformation();
+  
   if (!isset($information))
     return;
 

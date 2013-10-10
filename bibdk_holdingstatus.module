@@ -182,7 +182,7 @@ function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($order
           'clearfix'
         ),
         'id' => array(
-          'selid-' . drupal_html_id(reset($lookup_pids)),
+          drupal_html_id('selid-' . reset($lookup_pids)),
         ),
         'data-rel' => 'holdings',
       ),

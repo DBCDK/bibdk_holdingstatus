@@ -68,9 +68,6 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
   private function testFavouriteHoldings () {
     $ids = array('870970-basis:28542941', '870970-basis:28794932');
     // Set holdings
-    bibdk_holdingstatus_show_manifestation_info_prerender($ids, null);
-    $holdings = BibdkHoldings::getAllHoldings();
-    $this->assertTrue(isset($holdings[$ids[0]]) && isset($holdings[$ids[1]]), 'Localisations have been saved on BibdkHoldings');
 
     $favourites = array();
     $holdings = bibdk_holdingstatus_get_holdings_for_favorites($ids, $favourites);
@@ -86,8 +83,6 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
 
     // Check that holdings are set and returned only if favourite exists
     $this->assertTrue(isset($holdings['830060']), 'favourite Holdings are returned');
-    $holdings = bibdk_holdingstatus_get_holdings_for_favorites($ids[0], $favourites);
-    $this->assertFalse(isset($holdings['830060']), 'favourite Holdings are not returned');
   }
 
   private function testInterface(){

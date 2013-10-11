@@ -43,7 +43,7 @@ function bibdk_holdingstatus_get_localisation($pids) {
   $num_per_page = 10;
 
   // TO DO: Do this call as a hook? or method in ding_provider?
-  $favourites = _bibdk_favourite_get_from_webservice();
+  $favourites = bibdk_favourite_get_favourites();
   if (!empty($favourites)) {
     foreach ($favourites as $bibnr => $favourite) {
       if ($favourite->orderAgency == TRUE) {

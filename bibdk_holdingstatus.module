@@ -30,7 +30,13 @@ function bibdk_holdingstatus_get_status() {
 
   $loks = bibdk_holdingstatus_ajax_get_localizations($pid);
   
-  $localisationPid = $loks[agencies][$lid]['holdings'][$pid]['localisationPid'];
+  $localisationPid = isset($loks[agencies][$lid]['holdings'][$pid]['localisationPid']) ?
+  $loks[agencies][$lid]['holdings'][$pid]['localisationPid'] : NULL;
+  
+  // use pid as default
+  if (empty($localisationPid)){
+    $localisationPid = $pid;
+  }
   
   $holding = bibdk_holdingstatus_get_holdings($lid, $localisationPid);
   $display = bibdk_holdingstatus_status_display($holding[$lid][$localisationPid]);

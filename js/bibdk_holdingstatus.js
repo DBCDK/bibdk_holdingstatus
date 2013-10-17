@@ -2,8 +2,6 @@
 
     /** Insert holding status */
     Drupal.addHoldingStatus = function (holdingstatus) {
-        
-        alert(holdingstatus.href);
         $('.holding-status-load[data-pid=' + holdingstatus.pid + '][data-lid=' + holdingstatus.lid + ']').parent('a').attr('href',holdingstatus.href);
         $('.holding-status-load[data-pid=' + holdingstatus.pid + '][data-lid=' + holdingstatus.lid + ']').replaceWith(holdingstatus.data);
     },

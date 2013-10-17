@@ -27,15 +27,21 @@ function bibdk_holdingstatus_menu() {
 function bibdk_holdingstatus_get_status() {
   $lid = $_REQUEST['lid'];
   $pid = $_REQUEST['pid'];
+  $href = $_REQUEST['href'];
 
   $loks = bibdk_holdingstatus_ajax_get_localizations($pid);
   
   $localisationPid = isset($loks['agencies'][$lid]['holdings'][$pid]['localisationPid']) ?
   $loks['agencies'][$lid]['holdings'][$pid]['localisationPid'] : NULL;
   
+  $localIdentifier = isset($loks['agencies'][$lid]['holdings'][$pid]['localIdentifier']) ?
+  $loks['agencies'][$lid]['holdings'][$pid]['localIdentifier'] : NULL;
   // use pid as default
   if (empty($localisationPid)){
     $localisationPid = $pid;
+  }
+  if (!empty($localIdentifier)) {
+    $href = $href . $localIdentifier;
   }
   
   $holding = bibdk_holdingstatus_get_holdings($lid, $localisationPid);
@@ -44,7 +50,7 @@ function bibdk_holdingstatus_get_status() {
   $return = array(
     'pid' => $pid,
     'lid' => $lid,
-    'localisationPid'=>$localisationPid,
+    'href' => $href,
     'data' => drupal_render($display),
   );
   drupal_json_output($return);

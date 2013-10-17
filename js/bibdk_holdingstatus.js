@@ -2,11 +2,15 @@
 
     /** Insert holding status */
     Drupal.addHoldingStatus = function (holdingstatus) {
+        
+        alert(holdingstatus.href);
+        $('.holding-status-load[data-pid=' + holdingstatus.pid + '][data-lid=' + holdingstatus.lid + ']').parent('a').attr('href',holdingstatus.href);
         $('.holding-status-load[data-pid=' + holdingstatus.pid + '][data-lid=' + holdingstatus.lid + ']').replaceWith(holdingstatus.data);
     },
     Drupal.loadHoldingStatus = function(element){
         var pid = $(element).attr('data-pid');
         var lid = $(element).attr('data-lid');
+        var href = $(element).parent('a').attr('href');
         /* Add throbber*/
         $(element).addClass('ajax-progress');
         $(element).html('<span class="throbber">&nbsp;</span>');
@@ -17,7 +21,8 @@
             type:'POST',
             data:{
                 pid:pid,
-                lid:lid
+                lid:lid,
+                href:href
             },
             dataType:'json',
             success:Drupal.addHoldingStatus

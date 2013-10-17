@@ -76,6 +76,7 @@ function _bibdk_holdingsstatus_favourite_item_list($pid) {
       'library_name' => $favourite->getInformation()->getAgencyName(),
       'lid' => $key,
       'pid' => $pid,
+      'link' => (strpos($lookupUrl, '_IDNR_') !== false) ? str_replace('_IDNR_', $localIdentifier, $lookupUrl) : $lookupUrl . $localIdentifier,
     ));
   }
 

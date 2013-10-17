@@ -41,7 +41,7 @@ function bibdk_holdingstatus_get_status() {
     $localisationPid = $pid;
   }
   if (!empty($localIdentifier)) {
-    $href = $href . $localIdentifier;
+    $href = (strpos($href, '_IDNR_') !== false) ? str_replace('_IDNR_', $localIdentifier, $href) : $href . $localIdentifier;
   }
   
   $holding = bibdk_holdingstatus_get_holdings($lid, $localisationPid);

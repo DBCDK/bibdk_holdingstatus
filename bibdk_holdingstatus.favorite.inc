@@ -1,40 +1,5 @@
 <?php
 
-
-/**
- * Implements hook_show_manifestation_info_prerender
- */
-function bibdk_holdingstatus_show_manifestation_info_prerender($ids, $uid){
-  $favourites = _bibdk_favourite_get_from_webservice();
-  if (!isset($favourites) || count($favourites) == 0)
-    return;
-  $localizations = open_holdingstatus_localisationRequest($ids);
-  foreach($localizations['agencies'] as $lid => $holdings){
-    foreach($holdings['holdings'] as $pid => $holding){
-      BibdkHoldings::setHoldings($holding, $pid, $lid);
-    }
-  }
-  $information = bibdk_holdingstatus_get_agency_information($favourites);
-  BibdkHoldings::setAgencyInformation($information);
-}
-
-function bibdk_holdingstatus_get_holdings_for_favorites($pid, $informations){
-  if ( !empty($informations) )
-  {
-    foreach($informations as $agencyId => $information){
-        $holding = BibdkHoldings::getHoldings($pid, $information->getAgencyId());
-        if (isset($holding)){
-          $return[$agencyId] = array(
-            'holding' => $holding,
-            'information' => $information,
-          );
-        }
-    }
-    return isset($return) ? $return : null;
-  }
-  return null;
-}
-
 /*
  * get AgencyInformation from favourites
  */
@@ -74,14 +39,11 @@ function bibdk_holdingstatus_ting_openformat_actions($type, $entity, $view_mode,
  * @return string
  */
 function bibdk_holdingstatus_holdings_for_favourites_view($pid){
-  $information = BibdkHoldings::getAgencyInformation();
-  if (!isset($information))
-    return;
+   $item_list = _bibdk_holdingsstatus_favourite_item_list($pid);
 
-   $item_list = _bibdk_holdingsstatus_favourite_item_list($pid, $information);
-
-  if (!isset($item_list))
+  if (empty($item_list)) {
     return;
+  }
 
   $fav['link_text'] = t('home_at_favourites');
   $fav['path'] = 'favourites';
@@ -97,7 +59,6 @@ function bibdk_holdingstatus_holdings_for_favourites_view($pid){
   );
 
   return theme('bibdk_holdings_manifestation_field', $fav);
-
 }
 
 
@@ -106,22 +67,16 @@ function bibdk_holdingstatus_holdings_for_favourites_view($pid){
  * @param $information
  * @return array
  */
-function _bibdk_holdingsstatus_favourite_item_list($pid, $information) {
-  $item_favourites = bibdk_holdingstatus_get_holdings_for_favorites($pid, $information);
-
-  if (!isset($item_favourites)) {
-    return;
-  }
-
+function _bibdk_holdingsstatus_favourite_item_list($pid) {
+  $favourites = bibdk_favourite_get_favourites();
   $item_list = array();
-  foreach ($item_favourites as $key => $favourite) {
-    $lookupUrl = $favourite['information']->getLookupUrl();
-    $localIdentifier = $favourite['holding']['localIdentifier'];
+  foreach ($favourites as $key => $favourite) {
+    $lookupUrl = $favourite->getInformation()->getLookupUrl();
     $item_list[] = theme('favourite_holdings', array(
-      'library_name' => $favourite['information']->getAgencyName(),
+      'library_name' => $favourite->getInformation()->getAgencyName(),
       'lid' => $key,
       'pid' => $pid,
-      'link' => (strpos($lookupUrl, '_IDNR_') !== false) ? str_replace('_IDNR_', $localIdentifier, $lookupUrl) : $lookupUrl . $localIdentifier,
+      'link' => $lookupUrl,
     ));
   }
 

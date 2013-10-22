@@ -17,11 +17,18 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
   }
 
   public function setUp() {
-    parent::setUp(array('open_holdingstatus', 'bibdk_holdingstatus', 'bibdk_favourite', 'ting_agency', 'ding_user', 'bibdk_test_provider'));
-    variable_set('open_holdingstatus_url', 'http://openholdingstatus.addi.dk/1.0/');
+    parent::setUp(array('open_holdingstatus','open_holdingstatus_webservice_mockup', 'bibdk_holdingstatus', 'bibdk_favourite', 'ting_agency', 'ding_user', 'bibdk_test_provider'));
+    //variable_set('open_holdingstatus_url', 'http://openholdingstatus.addi.dk/1.0/');
+    variable_set('open_holdingstatus_url', $this->getAbsoluteUrl('/open_holdingstatus_webservice/'));
     variable_set('agency_search_url', 'http://openagency.addi.dk/2.6/');
 
   }
+  
+  public function tearDown(){
+    parent::tearDown();
+    module_disable(array('open_holdingstatus_webservice_mockup'));
+  }
+  
   public function testRunner(){
     $this->testBibdkHoldingsClass();
     $this->testInterface();
@@ -36,7 +43,8 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
     $this->assertEqual('red', $holding->status());
     $this->assertFalse($holding->isItHome());
     // Red light
-    $requestResult = open_holdingstatus_holdingsRequest(array('DK-870970'), '870970-basis:28542941');
+    $requestResult = open_holdingstatus_holdingsRequest(array('870970'), '870970-basis:28542941');
+    
     $holding = new BibdkHoldings($requestResult[0]);
     $this->assertEqual('service_not_supported_by_library', $holding->message());
     $this->assertEqual('red', $holding->status());
@@ -56,7 +64,7 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
     $this->assertFalse($holding->isItHome());
 
     // green light
-    $requestResult = open_holdingstatus_holdingsRequest(array('DK-763000'), '870970-basis:06343570');
+    $requestResult = open_holdingstatus_holdingsRequest(array('763000'), '870970-basis:06343570');
     $holding = new BibdkHoldings($requestResult[0]);
     $this->assertEqual('bibdk_holding_material_is_home', $holding->message());
     //$this->drupalGetAJAX()
@@ -94,7 +102,7 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
     // Check if holdingstatus is shown
     //$this->assertText('bibdk_holding_material_is_home');
     //First location should not be favourit library - user is not logged in
-    $this->assertRaw('<li class="first"><div id="820010" class="localisation-agency">');
+    $this->assertRaw('<li class="first"><div id="710100" class="localisation-agency">');
     $user = $this->loginAsProviderUser();
     $this->drupalGet('overlay/holdings/870970-basis:28542941,870970-basis:28794932');
     //First location should be favourit library - user is logged in

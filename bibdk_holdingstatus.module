@@ -27,7 +27,7 @@ function bibdk_holdingstatus_menu() {
 function bibdk_holdingstatus_get_status() {
   $lid = $_REQUEST['lid'];
   $pid = $_REQUEST['pid'];
-  $href = $_REQUEST['href'];
+  $href = isset($_REQUEST['href']) ? $_REQUEST['href'] : '';
 
   $loks = bibdk_holdingstatus_ajax_get_localizations($pid);
   

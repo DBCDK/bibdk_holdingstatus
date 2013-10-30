@@ -27,11 +27,30 @@ function bibdk_holdingstatus_get_agency_information($favourites){
 function bibdk_holdingstatus_ting_openformat_actions($type, $entity, $view_mode, $langcode){
   if ($type == 'bibdkManifestation'){
     $actions['favourite_holdings'] = array(
-      '#markup' => bibdk_holdingstatus_holdings_for_favourites_view($entity->id),
+      '#markup' => drupal_render(bibdk_holdings_favourite_placeholder($entity->id)),
       '#weight' => 1,
     );
     return $actions;
   }
+}
+
+/**
+ * Return a placeholder to be replaced by an ajax call
+ * attach the javascript to use
+ * @param type $pid
+ * @return type 
+ */
+function bibdk_holdings_favourite_placeholder($pid) {
+  return array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('bibdk-holdings-favourites'),
+      'data-pid' => $pid,
+    ),
+    '#attached' => array(
+      'js' => array(drupal_get_path('module', 'bibdk_holdingstatus') . '/js/bibdk_holdingstatus.js'),
+    ),
+  );
 }
 
 /** generate view for favourite holdings
@@ -68,14 +87,23 @@ function bibdk_holdingstatus_holdings_for_favourites_view($pid){
  * @return array
  */
 function _bibdk_holdingsstatus_favourite_item_list($pid) {
+  // get localizations
+  $loks = bibdk_holdingstatus_ajax_get_localizations($pid);
+  
   $favourites = bibdk_favourite_get_favourites();
   $item_list = array();
   foreach ($favourites as $key => $favourite) {
+    
+    if (!isset($loks['agencies'][$key])){
+      continue;
+    }
+    
     $lookupUrl = $favourite->getInformation()->getLookupUrl();
     $item_list[] = theme('favourite_holdings', array(
       'library_name' => $favourite->getInformation()->getAgencyName(),
       'lid' => $key,
       'pid' => $pid,
+      'holding' => 'HEST',
       'link' => $lookupUrl,
     ));
   }

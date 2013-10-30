@@ -29,7 +29,11 @@
     
     Drupal.setFavouriteHoldings = function(data){
         var div = $('.bibdk-holdings-favourites[data-pid=' + data.pid + ']');
-        div.html(data.html);
+        
+        var html = data.html.replace('<!--','');
+        html = html.replace('-->',''); 
+        
+        div.html(html);
       
         Drupal.attachBehaviors($('.holding-status-element'));
         div.find('.holding-status-element').each(function (i, element) {

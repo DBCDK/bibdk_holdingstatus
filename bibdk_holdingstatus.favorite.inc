@@ -25,6 +25,12 @@ function bibdk_holdingstatus_get_agency_information($favourites){
  * @return mixed
  */
 function bibdk_holdingstatus_ting_openformat_actions($type, $entity, $view_mode, $langcode){
+  // logged in users only
+  global $user;
+  if (!ding_user_is_provider_user($user)) {
+    return;
+  }
+  
   if ($type == 'bibdkManifestation'){
     $actions['favourite_holdings'] = array(
       '#markup' => bibdk_holdingstatus_holdings_for_favourites_view($entity->id),

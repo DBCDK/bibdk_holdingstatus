@@ -21,7 +21,6 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
     //variable_set('open_holdingstatus_url', 'http://openholdingstatus.addi.dk/1.0/');
     variable_set('open_holdingstatus_url', $this->getAbsoluteUrl('/open_holdingstatus_webservice/'));
     variable_set('agency_search_url', 'http://openagency.addi.dk/2.6/');
-
   }
   
   public function tearDown(){

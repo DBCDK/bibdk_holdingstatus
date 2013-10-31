@@ -18,7 +18,22 @@ function bibdk_holdingstatus_menu() {
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
+  
+  $items['holdings/favourites'] = array(
+    'page callback' => 'bibdk_holdingstatus_get_favourites',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
   return $items;
+}
+
+function bibdk_holdingstatus_get_favourites() {
+  $pid = $_REQUEST['pid'];
+  
+  $html = bibdk_holdingstatus_holdings_for_favourites_view($pid);
+  $data['html'] = $html;
+  $data['pid'] = $pid;
+  drupal_json_output($data);
 }
 
 /**

@@ -26,10 +26,48 @@
             success:Drupal.addHoldingStatus
         });
     }
+    
+    Drupal.setFavouriteHoldings = function(data){
+        var div = $('.bibdk-holdings-favourites[data-pid=' + data.pid + ']');
+        
+        var html = data.html.replace('<!--','');
+        html = html.replace('-->',''); 
+        
+        div.html(html);
+      
+        Drupal.attachBehaviors($('.holding-status-element'));
+        div.find('.holding-status-element').each(function (i, element) {
+            $(element).removeClass('holding-status-element').addClass('holding-status-load');
+            Drupal.loadHoldingStatus(element);
+        });
+    }
+    
+    Drupal.loadFavouriteHoldings = function(element){
+        var pid = $(element).attr('data-pid');
+        $(element).text(pid);
+        /* Add throbber*/
+        $(element).addClass('ajax-progress');
+        $(element).html('<span class="throbber">&nbsp;</span>');
+
+        /* Call ajax */
+        var request = $.ajax({
+            url:Drupal.settings.basePath + 'holdings/favourites',
+            type:'POST',
+            data:{
+                pid:pid
+            },
+            dataType:'json',
+            success:Drupal.setFavouriteHoldings
+        });
+    }
     /** Get holdingstatus via ajax */
     Drupal.behaviors.holdingsstatus = {
 
         attach:function (context) {
+            $('.bibdk-holdings-favourites', context).each(function (i, element) {
+                Drupal.loadFavouriteHoldings(element);
+            });
+            
             $('.holding-status-load', context).each(function (i, element) {
                 Drupal.loadHoldingStatus(element);
             });

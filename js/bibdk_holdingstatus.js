@@ -29,17 +29,19 @@
     
     Drupal.setFavouriteHoldings = function(data){
         var div = $('.bibdk-holdings-favourites[data-pid=' + data.pid + ']');
-        
+        if(data.html){
         var html = data.html.replace('<!--','');
         html = html.replace('-->',''); 
-        
-        div.html(html);
-      
-        Drupal.attachBehaviors($('.holding-status-element'));
-        div.find('.holding-status-element').each(function (i, element) {
-            $(element).removeClass('holding-status-element').addClass('holding-status-load');
-            Drupal.loadHoldingStatus(element);
-        });
+            div.html(html);
+            Drupal.attachBehaviors($('.holding-status-element'));
+            div.find('.holding-status-element').each(function (i, element) {
+                $(element).removeClass('holding-status-element').addClass('holding-status-load');
+                Drupal.loadHoldingStatus(element);
+            });
+        }
+        else{
+           div.html('');
+        }
     }
     
     Drupal.loadFavouriteHoldings = function(element){

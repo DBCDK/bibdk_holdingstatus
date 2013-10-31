@@ -18,12 +18,12 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
 
   public function setUp() {
     module_enable(array('open_holdingstatus_webservice_mockup'));
+    
     parent::setUp(array('open_holdingstatus','open_holdingstatus_webservice_mockup', 'bibdk_holdingstatus', 'bibdk_favourite', 'ting_agency', 'ding_user', 'bibdk_test_provider'));
     //variable_set('open_holdingstatus_url', 'http://openholdingstatus.addi.dk/1.0/');
-    
+    menu_rebuild();
     variable_set('open_holdingstatus_url', $this->getAbsoluteUrl('/open_holdingstatus_webservice/'));
     variable_set('agency_search_url', 'http://openagency.addi.dk/2.6/');
-
   }
   
   public function tearDown(){
@@ -34,6 +34,8 @@ class BibdkHoldingstatusBibdkHoldingsUnitTestCase extends DrupalWebTestCase {
   public function testRunner(){
     $this->testBibdkHoldingsClass();
     $this->testInterface();
+    
+    
    // $this->testFavouriteHoldings();
 
   }

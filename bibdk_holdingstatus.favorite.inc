@@ -30,10 +30,11 @@ function bibdk_holdingstatus_ting_openformat_actions($type, $entity, $view_mode,
   if (!ding_user_is_provider_user($user)) {
     return;
   }
-  
+
+  $placeholder = bibdk_holdings_favourite_placeholder($entity->id);
   if ($type == 'bibdkManifestation'){
     $actions['favourite_holdings'] = array(
-      '#markup' => drupal_render(bibdk_holdings_favourite_placeholder($entity->id)),
+      '#markup' => drupal_render($placeholder),
       '#weight' => 1,
     );
     return $actions;
@@ -43,8 +44,8 @@ function bibdk_holdingstatus_ting_openformat_actions($type, $entity, $view_mode,
 /**
  * Return a placeholder to be replaced by an ajax call
  * attach the javascript to use
- * @param type $pid
- * @return type 
+ * @param String $pid
+ * @return array
  */
 function bibdk_holdings_favourite_placeholder($pid) {
   return array(

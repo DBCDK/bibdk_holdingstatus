@@ -18,7 +18,7 @@ function bibdk_holdingstatus_menu() {
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
-  
+
   $items['holdings/favourites'] = array(
     'page callback' => 'bibdk_holdingstatus_get_favourites',
     'access arguments' => array('access content'),
@@ -29,7 +29,7 @@ function bibdk_holdingstatus_menu() {
 
 function bibdk_holdingstatus_get_favourites() {
   $pid = $_REQUEST['pid'];
-  
+
   $html = bibdk_holdingstatus_holdings_for_favourites_view($pid);
   $data['html'] = $html;
   $data['pid'] = $pid;
@@ -45,10 +45,10 @@ function bibdk_holdingstatus_get_status() {
   $href = isset($_REQUEST['href']) ? $_REQUEST['href'] : '';
 
   $loks = bibdk_holdingstatus_ajax_get_localizations($pid);
-  
+
   $localisationPid = isset($loks['agencies'][$lid]['holdings'][$pid]['localisationPid']) ?
   $loks['agencies'][$lid]['holdings'][$pid]['localisationPid'] : NULL;
-  
+
   $localIdentifier = isset($loks['agencies'][$lid]['holdings'][$pid]['localIdentifier']) ?
   $loks['agencies'][$lid]['holdings'][$pid]['localIdentifier'] : NULL;
   // use pid as default
@@ -58,7 +58,7 @@ function bibdk_holdingstatus_get_status() {
   if (!empty($localIdentifier)) {
     $href = (strpos($href, '_IDNR_') !== false) ? str_replace('_IDNR_', $localIdentifier, $href) : $href . $localIdentifier;
   }
-  
+
   $holding = bibdk_holdingstatus_get_holdings($lid, $localisationPid);
   $display = bibdk_holdingstatus_status_display($holding[$lid][$localisationPid]);
 
@@ -104,8 +104,14 @@ function bibdk_holdingstatus_get_localisation($pids) {
 
   $count_localisations = (isset($result['agencies'])) ? count($result['agencies']) : 0;
 
-  if (!$count_localisations && isset($result['error_message'])) {
-    $error_messages = array_unique($result['error_message']);
+  if (!$count_localisations) {
+    if (isset($result['error_message'])){
+      $error_messages = array_unique($result['error_message']);
+    }
+    else {
+      $error_messages['no_holdings'] = t('no_holdings_for_manifestations', array(), array('context' => 'bibdk_holdingstatus'));
+    }
+
   }
 
   $page = pager_default_initialize($count_localisations, $num_per_page);

@@ -98,17 +98,19 @@ function _bibdk_holdingsstatus_favourite_item_list($pid) {
   $loks = bibdk_holdingstatus_ajax_get_localizations($pid);
   
   $favourites = bibdk_favourite_get_favourites();
+  
   $item_list = array();
   foreach ($favourites as $key => $favourite) {
-    
-    if (!isset($loks['agencies'][$key])){
+   $agency = new TingAgency($key);
+   $agencyId = $agency->getAgencyMainId(); 
+    if (!isset($loks['agencies'][$agencyId])){
       continue;
     }
     
-    $lookupUrl = $favourite->getInformation()->getLookupUrl();
+    $lookupUrl = $favourite->getInformation()->getLookupUrl();    
     $item_list[] = theme('favourite_holdings', array(
-      'library_name' => $favourite->getInformation()->getAgencyName(),
-      'lid' => $key,
+      'library_name' => $agency->getBranch()->getBranchName(),
+      'lid' => $agencyId,
       'pid' => $pid,
       'holding' => 'HEST',
       'link' => $lookupUrl,

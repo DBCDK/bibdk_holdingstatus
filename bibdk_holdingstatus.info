@@ -9,4 +9,5 @@ dependencies[] = open_holdingstatus
 dependencies[] = bibdk_favourite
 
 files[] = BibdkHoldings.php
-files[] = test/bibdk_holdingstatus.test
+files[] = test/bibdk_holdingstatus_unit.test
+files[] = test/bibdk_holdingstatus_web.test

@@ -80,25 +80,40 @@ class BibdkHoldings {
   }
 
   /**
-   * return relevant status message
+   * return an untranslated message
+   */
+  public function rawMessage(){
+    $return = array(
+      'message' => '',
+      'options' => array(),
+    );
+    if ($this->getWillLend() && $this->isItHome()) {
+      $return['message'] = 'bibdk_holding_material_is_home';
+    }
+    else if (!$this->isItHome() && $this->getExpectedDelivery()) {
+      $return['message'] = 'bibdk_holding_material_will_be_home @date';
+      $return['options'] = array('@date' => format_date($this->getExpectedDelivery(), 'custom', 'd.m.Y'));
+    }
+    else if ($note = $this->hasNote()){
+      $return['message'] = $note;
+    }
+    else if ($error = $this->getErrorMessage()) {
+      $return['message'] = $error;
+    }
+    else {
+      $return['message'] = 'bibdk_holding_someting_went_wrong';
+    }
+
+    return $return;
+  }
+
+  /**
+   * return a translated status message
    * @return string
    */
   public function message() {
-    if ($this->getWillLend() && $this->isItHome()) {
-      return t('bibdk_holding_material_is_home', array(), array('context' => 'bibdk_holdingstatus'));
-    }
-    else if (!$this->isItHome() && $this->getExpectedDelivery()) {
-      return t('bibdk_holding_material_will_be_home @date', array('@date' => format_date($this->getExpectedDelivery(), 'custom', 'd.m.Y')), array('context' => 'bibdk_holdingstatus'));
-    }
-    else if ($note = $this->hasNote()){
-      return t($note, array(), array('context' => 'bibdk_holdingstatus'));
-    }
-    else if ($this->getErrorMessage()) {
-      return t($this->getErrorMessage());
-    }
-    else {
-      return t('bibdk_holding_someting_went_wrong', array(), array('context' => 'bibdk_holdingstatus'));
-    }
-    return "";
+    $message = $this->rawMessage();
+
+    return t($message['message'], $message['options'], array('context' => 'bibdk_holdingstatus'));;
   }
 }

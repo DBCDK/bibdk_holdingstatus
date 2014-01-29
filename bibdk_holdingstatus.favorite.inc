@@ -17,7 +17,9 @@ function bibdk_holdingstatus_get_agency_information($favourites){
   return null;
 }
 
-/** implements hook_ting_openformat_actions
+/**
+ * implements hook_ting_openformat_actions
+ *
  * @param $type
  * @param $entity
  * @param $view_mode
@@ -60,7 +62,9 @@ function bibdk_holdings_favourite_placeholder($pid) {
   );
 }
 
-/** generate view for favourite holdings
+/**
+ * Generate view for favourite holdings
+ *
  * @param $pid
  * @return string
  */
@@ -87,10 +91,10 @@ function bibdk_holdingstatus_holdings_for_favourites_view($pid){
   return theme('bibdk_holdings_manifestation_field', $fav);
 }
 
-
-/** Helper function - generate item list for favourite holdings
+/**
+ * Helper function - generate item list for favourite holdings
+ *
  * @param $pid
- * @param $information
  * @return array
  */
 function _bibdk_holdingsstatus_favourite_item_list($pid) {
@@ -112,7 +116,6 @@ function _bibdk_holdingsstatus_favourite_item_list($pid) {
       'library_name' => $agency->getBranch()->getBranchName(),
       'lid' => $agencyId,
       'pid' => $pid,
-      'holding' => 'HEST',
       'link' => $lookupUrl,
     ));
   }

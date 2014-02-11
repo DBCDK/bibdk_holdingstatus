@@ -355,7 +355,7 @@ function _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $localIdentifier, $no
       'note' => ($note) ? array(
         '#prefix' => '<span>(',
         '#type' => 'markup',
-        '#markup' => t($note, array(), array('context' => 'bibdk_holdingstatus')),
+        '#markup' => t($note, array(), array('context' => 'open_holdingstatus')),
         '#suffix' => ')</span>',
           ) : NULL,
     ),

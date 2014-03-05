@@ -102,23 +102,22 @@ function bibdk_holdingstatus_get_localisation($pids) {
   $agencies = array();
   $error_messages = array();
 
-  $count_localisations = (isset($result['agencies'])) ? count($result['agencies']) : 0;
+  $count_localisations = ( isset($result['agencies']) && is_array($result['agencies']) ) ? count($result['agencies']) : 0;
 
-  if (!$count_localisations) {
-    if (isset($result['error_message'])){
+  if ( !$count_localisations ) {
+    if ( isset($result['error_message']) && is_array($result['error_message']) ) {
       $error_messages = array_unique($result['error_message']);
     }
     else {
       $error_messages['no_holdings'] = t('no_holdings_for_manifestations', array(), array('context' => 'bibdk_holdingstatus'));
     }
-
   }
 
   $page = pager_default_initialize($count_localisations, $num_per_page);
 
   $offset = $num_per_page * $page;
 
-  if ($count_localisations) {
+  if ( $count_localisations ) {
     $agencies = array_slice($result['agencies'], $offset, $num_per_page, $preserve_keys = TRUE);
   }
 

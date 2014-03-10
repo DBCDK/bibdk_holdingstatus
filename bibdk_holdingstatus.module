@@ -270,8 +270,8 @@ function bibdk_holdingstatus_no_locations_txt($info_txt){
  * @return array
  */
 function bibdk_holdingstatus_handle_response($information, $agency, $holdingstatus_results = NULL) {
-  if (isset($information)) {
 
+  if ( isset($information) && is_object($information) ) {
     foreach ($agency['holdings'] as $pid => $holding) {
       $holdings[$pid]['status'] = array(
         '#type' => 'fieldset',

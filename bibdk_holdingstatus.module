@@ -207,6 +207,11 @@ function bibdk_holdingstatus_get_holdings($agencyIds, $pids) {
  * @return array
  */
 function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($ordered_subworks, $type_id, $subtype_id, $subWork) {
+
+  if( !$subWork->showLocalizationLink() ){
+    return bibdk_holdingstatus_no_locations_txt('No_localizaton_txt');
+  }
+
   $lookup_pids = $subWork->getHostPublicationID();
   $render = array(
     'localisations_link' => array(
@@ -233,6 +238,29 @@ function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($order
   );
   return $render;
 }
+
+function bibdk_holdingstatus_no_locations_txt($info_txt){
+  $ret = array(
+    'container' => array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array(
+          'text-small',
+          'text-lightgrey',
+          'clearfix',
+        ),
+      ),
+    ),
+  );
+
+  $ret['container']['info_txt'] = array(
+    '#markup' => t($info_txt, array(), array('context' => 'ting_holdingstatus'))
+  );
+
+  return $ret;
+}
+
+
 
 /**
  * Handling the response

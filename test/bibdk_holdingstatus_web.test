@@ -23,9 +23,12 @@ class BibdkHoldingstatusBibdkHoldingsWebTestCase extends DrupalWebTestCase {
 
     variable_set('open_holdingstatus_url', $this->getAbsoluteUrl('/bibdk_holdingstatus_webservice/'));
     variable_set('agency_search_url', $this->getAbsoluteUrl('/bibdk_holdingstatus_webservice/'));
+    variable_set('agency_search_xsd_url',$this->getAbsoluteUrl('/openagency_webservice/xsd'));
+
 
     variable_set('bibdk_provider_webservice_url', $this->getAbsoluteUrl('bibdk_webservice'));
     variable_set('bibdk_provider_security_code', 'securityCode');
+
 
   }
 

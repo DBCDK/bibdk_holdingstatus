@@ -102,23 +102,22 @@ function bibdk_holdingstatus_get_localisation($pids) {
   $agencies = array();
   $error_messages = array();
 
-  $count_localisations = (isset($result['agencies'])) ? count($result['agencies']) : 0;
+  $count_localisations = ( isset($result['agencies']) && is_array($result['agencies']) ) ? count($result['agencies']) : 0;
 
-  if (!$count_localisations) {
-    if (isset($result['error_message'])){
+  if ( !$count_localisations ) {
+    if ( isset($result['error_message']) && is_array($result['error_message']) ) {
       $error_messages = array_unique($result['error_message']);
     }
     else {
       $error_messages['no_holdings'] = t('no_holdings_for_manifestations', array(), array('context' => 'bibdk_holdingstatus'));
     }
-
   }
 
   $page = pager_default_initialize($count_localisations, $num_per_page);
 
   $offset = $num_per_page * $page;
 
-  if ($count_localisations) {
+  if ( $count_localisations ) {
     $agencies = array_slice($result['agencies'], $offset, $num_per_page, $preserve_keys = TRUE);
   }
 
@@ -207,6 +206,11 @@ function bibdk_holdingstatus_get_holdings($agencyIds, $pids) {
  * @return array
  */
 function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($ordered_subworks, $type_id, $subtype_id, $subWork) {
+
+  if( !$subWork->showLocalizationLink() ){
+    return bibdk_holdingstatus_no_locations_txt('No_localizaton_txt');
+  }
+
   $lookup_pids = $subWork->getHostPublicationID();
   $render = array(
     'localisations_link' => array(
@@ -234,6 +238,29 @@ function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($order
   return $render;
 }
 
+function bibdk_holdingstatus_no_locations_txt($info_txt){
+  $ret = array(
+    'container' => array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array(
+          'text-small',
+          'text-lightgrey',
+          'clearfix',
+        ),
+      ),
+    ),
+  );
+
+  $ret['container']['info_txt'] = array(
+    '#markup' => t($info_txt, array(), array('context' => 'ting_holdingstatus'))
+  );
+
+  return $ret;
+}
+
+
+
 /**
  * Handling the response
  *
@@ -243,8 +270,8 @@ function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($order
  * @return array
  */
 function bibdk_holdingstatus_handle_response($information, $agency, $holdingstatus_results = NULL) {
-  if (isset($information)) {
 
+  if ( isset($information) && is_object($information) ) {
     foreach ($agency['holdings'] as $pid => $holding) {
       $holdings[$pid]['status'] = array(
         '#type' => 'fieldset',

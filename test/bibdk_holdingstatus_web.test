@@ -19,14 +19,19 @@ class BibdkHoldingstatusBibdkHoldingsWebTestCase extends DrupalWebTestCase {
 
   public function setUp() {
 
-    parent::setUp(array('bibdk_holdingstatus_webservice_mockup', 'bibdk_holdingstatus', 'bibdk_provider', 'bibdk_webservice'));
+    parent::setUp(array('bibdk_holdingstatus_webservice_mockup','openagency_webservice_mockup','open_holdingstatus_webservice_mockup', 'bibdk_holdingstatus', 'bibdk_provider', 'bibdk_webservice'));
 
-    variable_set('open_holdingstatus_url', $this->getAbsoluteUrl('/bibdk_holdingstatus_webservice/'));
     variable_set('agency_search_url', $this->getAbsoluteUrl('/bibdk_holdingstatus_webservice/'));
+    variable_set('agency_search_xsd_url',$this->getAbsoluteUrl('/openagency_webservice/openagency.xsd'));
+
+    variable_set('open_holdingstatus_url', $this->getAbsoluteUrl('/open_holdingstatus_webservice/'));
+    variable_set('open_holdingstatus_xsd_url',$this->getAbsoluteUrl('/open_holdingstatus_webservice/openholdingstatus.xsd'));
+
+    variable_set('bibdk_holdingstatus_url', $this->getAbsoluteUrl('/bibdk_holdingstatus_webservice/'));
+
 
     variable_set('bibdk_provider_webservice_url', $this->getAbsoluteUrl('bibdk_webservice'));
     variable_set('bibdk_provider_security_code', 'securityCode');
-
   }
 
   public function testRunner() {

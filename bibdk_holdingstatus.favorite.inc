@@ -116,7 +116,7 @@ function _bibdk_holdingsstatus_favourite_item_list($pid) {
 
     $lookupUrl = $favourite->getInformation()->getLookupUrl();    
     $item_list[$agencyId] = theme('favourite_holdings', array(
-      'library_name' => $info1 = $agency->getInformation()->getAgencyName(),
+      'library_name' => $agency->getInformation()->getAgencyName(),
       'lid' => $agencyId,
       'pid' => $pid,
       'link' => $lookupUrl,

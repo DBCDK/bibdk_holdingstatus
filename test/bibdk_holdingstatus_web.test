@@ -46,12 +46,12 @@ class BibdkHoldingstatusBibdkHoldingsWebTestCase extends DrupalWebTestCase {
     $this->assertText('Københavns Biblioteker');
 
     // Check if holdingstatus is shown
-    $this->assertRaw('<li class="first"><div id="710100" class="localisation-agency">');
+    $this->assertRaw('<div id="710100" class="localisation-agency">');
     $this->loginAsProviderUser();
     $this->drupalGet('overlay/holdings/870970-basis:28542941,870970-basis:28794932');
 
     //First location should be favourit library - user is logged in
-    $this->assertRaw('<li class="first"><div id="710100" class="localisation-agency">');
+    $this->assertRaw('<div id="710100" class="localisation-agency">');
 
     // Test get holding status via ajax
     $this->drupalGetAJAX('holdings/status', array('query' => array('pid' => '870970-basis:28542941', 'lid' => '710100')));

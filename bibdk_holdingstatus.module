@@ -79,31 +79,23 @@ function bibdk_holdingstatus_ajax_get_localizations($pid) {
 function bibdk_holdingstatus_get_localisation($pids) {
   $agency_id = FALSE;
   $num_per_page = 10;
-
-  // TO DO: Do this call as a hook? or method in ding_provider?
-  $favourites = bibdk_favourite_get_favourites();
-  if (!empty($favourites)) {
-    foreach ($favourites as $bibnr => $favourite) {
-      if ($favourite->orderAgency == TRUE) {
-        $agency_id = $bibnr;
-      }
-    }
-  }
-
+  $max_per_page = 1000;
+  $favourit_postcode = '0001';
+  
   $ids = explode(',', $pids);
 
+  $agency_id = get_favourit_lib(bibdk_favourite_get_favourites());
   if ($agency_id) {
+    $logged_in_and_favourite_order_Agency = true;
     $result = open_holdingstatus_localisationRequest($ids, $agency_id);
   }
   else {
+    $logged_in_and_favourite_order_Agency = false;
     $result = open_holdingstatus_localisationRequest($ids);
   }
 
-  $agencies = array();
   $error_messages = array();
-
   $count_localisations = ( isset($result['agencies']) && is_array($result['agencies']) ) ? count($result['agencies']) : 0;
-
   if ( !$count_localisations ) {
     if ( isset($result['error_message']) && is_array($result['error_message']) ) {
       $error_messages = array_unique($result['error_message']);
@@ -112,29 +104,37 @@ function bibdk_holdingstatus_get_localisation($pids) {
       $error_messages['no_holdings'] = t('no_holdings_for_manifestations', array(), array('context' => 'bibdk_holdingstatus'));
     }
   }
-
-  $page = pager_default_initialize($count_localisations, $num_per_page);
-
-  $offset = $num_per_page * $page;
-
-  if ( $count_localisations ) {
-    $agencies = array_slice($result['agencies'], $offset, $num_per_page, $preserve_keys = TRUE);
-  }
-
-  //$holdings = bibdk_holdingstatus_get_holdings($agencies, $ids);
+  
   $render_agencies = array();
-  foreach ($agencies as $agencyId => $localization) {
+  foreach ($result['agencies'] as $agencyId => $localization) {
     $agency = new TingAgency($agencyId);
     $information = $agency->getInformation();
     if (!isset($information)) {
       $error_messages[] = t('library_not_found');
     }
     else {
-      //$holding = isset($holdings[$agencyId]) ? $holdings[$agencyId] : null;
       $element = bibdk_holdingstatus_handle_response($information, $localization);
-      $render_agencies[$agencyId] = drupal_render($element);
+      if ($logged_in_and_favourite_order_Agency) {
+        //Order agency - will be placed first in list
+        $render_agencies[$favourit_postcode . $information->getAgencyName()] = drupal_render($element);
+        $logged_in_and_favourite_order_Agency = false;
+      } 
+      else {
+        $render_agencies[$information->getPostalCode() . $information->getAgencyName()] = drupal_render($element);
+      }
     }
   }
+
+  //do sort - on postcode and agencyName
+  ksort($render_agencies,SORT_STRING);
+
+  if (show_all_locations(func_get_args())) {
+    $num_per_page = $max_per_page;
+  }  
+  $page = pager_default_initialize($count_localisations, $num_per_page);
+  $offset = $num_per_page * $page;
+  $render_agenciesresult =  array_slice($render_agencies, $offset, $num_per_page, $preserve_keys = TRUE);
+  
   $output['errors'] = ($error_messages) ? array(
     '#items' => $error_messages,
     '#theme' => 'item_list',
@@ -152,9 +152,17 @@ function bibdk_holdingstatus_get_localisation($pids) {
     '#type' => 'markup',
     '#markup' => '<p class="note-localisations">' . t("NB! Send your reservation to the library, where you want to pick up the material.", array(), array('context' => 'bibdk_holdingstatus')) . '</p>',
       ) : NULL;
-
+   
+  $output['show_all_locations'] = ($count_localisations) ? array(
+    'link' => array(
+      '#type' => 'link',
+      '#title' => t("show_all_locations"),
+      '#href' => current_path() . '/show_all_locations',
+    ),
+  ) : NULL;
+  
   $output['list_localisations'] = array(
-    '#items' => $render_agencies,
+    '#items' => $render_agenciesresult,
     '#theme' => 'item_list',
     '#attributes' => array(
       'class' => array('list-agencies'),
@@ -290,7 +298,6 @@ function bibdk_holdingstatus_handle_response($information, $agency, $holdingstat
       '#theme' => 'localisation_agencies',
       '#branchId' => $information->getBranchId(),
       '#agencyName' => $information->getAgencyName(),
-      '#postalAddress' => $information->getPostalAddress(),
       '#postalCode' => $information->getPostalCode(),
       '#city' => $information->getCity(),
       '#lookupUrl' => $holdings,
@@ -318,7 +325,6 @@ function bibdk_holdingstatus_theme() {
         'branchId' => '',
         'agencyName' => '',
         'branchName' => '',
-        'postalAddress' => '',
         'postalCode' => '',
         'city' => '',
         'lookupUrl' => '',
@@ -389,3 +395,36 @@ function _bibdk_holdingstatus_create_lookupUrl($lookupUrl, $localIdentifier, $no
   );
 }
 
+/**
+ * Helper function: Check for argument: show_all_locations
+ *
+ * @param $show_args
+ * @return boolean
+ */
+function show_all_locations($show_args) {
+  if (!empty($show_args)) {
+    foreach ($show_args as $arg ) {
+      if ($arg == 'show_all_locations') {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Helper function: Check for favourite orderAgency library
+ *
+ * @param $favourites
+ * @return libraryNo or 0
+ */
+function get_favourit_lib ($favourites) {
+  if (!empty($favourites)) {
+    foreach ($favourites as $bibnr => $favourite) {
+      if ($favourite->orderAgency == TRUE) {
+        return $bibnr;
+      }
+    }
+  }
+  return 0;
+}

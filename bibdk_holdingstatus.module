@@ -106,21 +106,23 @@ function bibdk_holdingstatus_get_localisation($pids) {
   }
   
   $render_agencies = array();
-  foreach ($result['agencies'] as $agencyId => $localization) {
-    $agency = new TingAgency($agencyId);
-    $information = $agency->getInformation();
-    if (!isset($information)) {
-      $error_messages[] = t('library_not_found');
-    }
-    else {
-      $element = bibdk_holdingstatus_handle_response($information, $localization);
-      if ($logged_in_and_favourite_order_Agency) {
-        //Order agency - will be placed first in list
-        $render_agencies[$favourit_postcode . $information->getAgencyName()] = drupal_render($element);
-        $logged_in_and_favourite_order_Agency = false;
-      } 
+  if ( isset($result['agencies']) ) {
+    foreach ($result['agencies'] as $agencyId => $localization) {
+      $agency = new TingAgency($agencyId);
+      $information = $agency->getInformation();
+      if (!isset($information)) {
+        $error_messages[] = t('library_not_found');
+      }
       else {
-        $render_agencies[$information->getPostalCode() . $information->getAgencyName()] = drupal_render($element);
+        $element = bibdk_holdingstatus_handle_response($information, $localization);
+        if ($logged_in_and_favourite_order_Agency) {
+          //Order agency - will be placed first in list
+          $render_agencies[$favourit_postcode . $information->getAgencyName()] = drupal_render($element);
+          $logged_in_and_favourite_order_Agency = false;
+        } 
+        else {
+          $render_agencies[$information->getPostalCode() . $information->getAgencyName()] = drupal_render($element);
+        }
       }
     }
   }

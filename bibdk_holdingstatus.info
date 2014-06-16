@@ -1,6 +1,6 @@
 name = Bibliotek.dk holdingstatus
 description = Display the result of an OpenHoldingStatus request in Bibliotek.dk.
-version = 7.x-0.20
+version = 7.x-0.21
 
 package = Bibliotek.dk
 core = 7.x

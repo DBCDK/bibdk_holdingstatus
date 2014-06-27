@@ -10,7 +10,9 @@
   <p class="agencyName"><?php print $agencyName; ?></p>
   <p class="postalCode"><?php print $postalCode; ?></p>
   <p class="city"><?php print $city; ?></p>
+<?php if ( !empty($email) ) { ?>
   <p class="email"><?php print $email; ?></p>
+<?php } ?>
   <?php echo drupal_render($lookupUrl); ?>
   <p class="note"><?php print $note; ?></p>
   <p class="note"><?php print $error; ?></p>

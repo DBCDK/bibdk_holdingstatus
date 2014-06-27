@@ -9,7 +9,7 @@ function bibdk_holdingstatus_menu() {
   $items['overlay/holdings/%'] = array(
     'title' => t('Localisations', array(), array('context' => 'bibdk_holdingstatus')),
     'page callback' => 'bibdk_holdingstatus_get_localisation',
-    'page arguments' => array(2, NULL),
+    'page arguments' => array(2),
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
@@ -25,7 +25,6 @@ function bibdk_holdingstatus_menu() {
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
-
   $items['holdings/favourites'] = array(
     'page callback' => 'bibdk_holdingstatus_get_favourites',
     'access arguments' => array('access content'),
@@ -83,7 +82,7 @@ function bibdk_holdingstatus_ajax_get_localizations($pid) {
   return $result;
 }
 
-function bibdk_holdingstatus_get_localisation($pids, $ref) {
+function bibdk_holdingstatus_get_localisation($pids, $ref=NULL) {
   $agency_id = FALSE;
   $num_per_page = 10;
   $max_per_page = 1000;
@@ -112,13 +111,22 @@ function bibdk_holdingstatus_get_localisation($pids, $ref) {
     }
   }
   
+// $logfile = conf_path() . '/files/test.log';
+// ini_set('log_errors', 1);
+// ini_set('error_log', $logfile);
+
   $render_agencies = array();
   $worldcat_info = array('sortkey'=>NULL, 'rs_library'=>FALSE, 'no_rs_library'=>FALSE);
 
   if ( isset($result['agencies']) ) {
     foreach ($result['agencies'] as $agencyId => $localization) {
+
+// error_log(print_r($agencyId,1));
+
       $agency = new TingAgency($agencyId);
-      $information = $agency->getBranch(); // require openagency 2.11 or better
+      // $information = $agency->getInformation();
+      $information = $agency->getBranch();
+
       if ( !isset($information) ) {
         $error_messages[] = t('library_not_found');
       }

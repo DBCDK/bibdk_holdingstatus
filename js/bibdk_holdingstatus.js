@@ -9,13 +9,14 @@
         var pid = $(element).attr('data-pid');
         var lid = $(element).attr('data-lid');
         var href = $(element).parent('a').attr('href');
+        
         /* Add throbber*/
         $(element).addClass('ajax-progress');
         $(element).html('<span class="throbber">&nbsp;</span>');
 
         /* Call ajax */
         var request = $.ajax({
-            url:Drupal.settings.basePath + 'holdings/status',
+            url:Drupal.settings.basePath + Drupal.settings.pathPrefix + 'holdings/status',
             type:'POST',
             data:{
                 pid:pid,
@@ -53,7 +54,7 @@
 
         /* Call ajax */
         var request = $.ajax({
-            url:Drupal.settings.basePath + 'holdings/favourites',
+            url:Drupal.settings.basePath + Drupal.settings.pathPrefix + 'holdings/favourites',
             type:'POST',
             data:{
                 pid:pid

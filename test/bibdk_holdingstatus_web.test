@@ -19,16 +19,22 @@ class BibdkHoldingstatusBibdkHoldingsWebTestCase extends DrupalWebTestCase {
 
   public function setUp() {
 
-    parent::setUp(array('bibdk_holdingstatus_webservice_mockup','openagency_webservice_mockup','open_holdingstatus_webservice_mockup', 'bibdk_holdingstatus', 'bibdk_provider', 'bibdk_webservice'));
+    parent::setUp(
+      array(
+        'bibdk_holdingstatus_webservice_mockup',
+        'openagency_webservice_mockup',
+        'open_holdingstatus_webservice_mockup',
+        'bibdk_holdingstatus',
+        'bibdk_provider',
+        'bibdk_webservice',
+      )
+    );
 
     variable_set('agency_search_url', $this->getAbsoluteUrl('/bibdk_holdingstatus_webservice/'));
     variable_set('agency_search_xsd_url',$this->getAbsoluteUrl('/openagency_webservice/openagency.xsd'));
 
     variable_set('open_holdingstatus_url', $this->getAbsoluteUrl('/open_holdingstatus_webservice/'));
     variable_set('open_holdingstatus_xsd_url',$this->getAbsoluteUrl('/open_holdingstatus_webservice/openholdingstatus.xsd'));
-
-    variable_set('bibdk_holdingstatus_url', $this->getAbsoluteUrl('/bibdk_holdingstatus_webservice/'));
-
 
     variable_set('bibdk_provider_webservice_url', $this->getAbsoluteUrl('bibdk_webservice'));
     variable_set('bibdk_provider_security_code', 'securityCode');
@@ -44,7 +50,9 @@ class BibdkHoldingstatusBibdkHoldingsWebTestCase extends DrupalWebTestCase {
     //Check if localisations are shown
     $this->assertText('There are 45 localisations');
     $this->assertText('Københavns Biblioteker');
-
+    // don't show email address unless a WorldCat holdings window 
+    $this->assertNoText('hovinf@kff.kk.dk');
+    
     // Check if holdingstatus is shown
     $this->assertRaw('<div id="710100" class="localisation-agency">');
     $this->loginAsProviderUser();
@@ -56,6 +64,18 @@ class BibdkHoldingstatusBibdkHoldingsWebTestCase extends DrupalWebTestCase {
     // Test get holding status via ajax
     $this->drupalGetAJAX('holdings/status', array('query' => array('pid' => '870970-basis:28542941', 'lid' => '710100')));
     $this->assertRaw('bibdk_holding_material_is_home');
+
+    // get WorldCat holdings popup window
+    $this->drupalGet('overlay/holdings/870970-basis:28542941,870970-basis:28794932/worldcat');
+
+    //Check if headers are shown
+    $this->assertText('subheader_do_accept_international_requests');
+    $this->assertText('subheader_dont_accept_international_requests');
+    $this->assertText('Syddansk Universitetsbibliotek');
+    $this->assertText('Københavns Biblioteker');
+    $this->assertText('sdub@bib.sdu.dk');
+    $this->assertText('hovinf@kff.kk.dk');
+     
   }
 
   private function loginAsProviderUser() {

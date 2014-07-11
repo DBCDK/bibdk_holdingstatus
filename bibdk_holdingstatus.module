@@ -87,7 +87,7 @@ function bibdk_holdingstatus_get_localisation($pids, $ref=NULL) {
   $num_per_page = 10;
   $max_per_page = 1000;
   $favourit_postcode = '0001';
-  
+
   $ids = explode(',', $pids);
 
   $agency_id = get_favourit_lib(bibdk_favourite_get_favourites());
@@ -110,7 +110,7 @@ function bibdk_holdingstatus_get_localisation($pids, $ref=NULL) {
       $error_messages['no_holdings'] = t('no_holdings_for_manifestations', array(), array('context' => 'bibdk_holdingstatus'));
     }
   }
-  
+
 // $logfile = conf_path() . '/files/test.log';
 // ini_set('log_errors', 1);
 // ini_set('error_log', $logfile);
@@ -144,7 +144,7 @@ function bibdk_holdingstatus_get_localisation($pids, $ref=NULL) {
           $sortkey = $worldcat_info['sortkey'] . $favourit_postcode . $information->getAgencyName();
           $render_agencies[$sortkey] = drupal_render($element);
           $logged_in_and_favourite_order_Agency = false;
-        } 
+        }
         else {
           $sortkey = $worldcat_info['sortkey'] . $information->getPostalCode() . $information->getAgencyName();
           $render_agencies[$sortkey] = drupal_render($element);
@@ -152,7 +152,7 @@ function bibdk_holdingstatus_get_localisation($pids, $ref=NULL) {
       }
     }
   }
-  
+
   if ( $ref == 'worldcat' ) {
     if ( $worldcat_info['rs_library'] == TRUE ) {
       $RSlibrarySubheader1['#theme'] = 'localisation_agencies';
@@ -171,11 +171,11 @@ function bibdk_holdingstatus_get_localisation($pids, $ref=NULL) {
 
   if (show_all_locations(func_get_args())) {
     $num_per_page = $max_per_page;
-  }  
+  }
   $page = pager_default_initialize($count_localisations, $num_per_page);
   $offset = $num_per_page * $page;
   $render_agenciesresult =  array_slice($render_agencies, $offset, $num_per_page, $preserve_keys = TRUE);
-  
+
   $output['errors'] = ($error_messages) ? array(
     '#items' => $error_messages,
     '#theme' => 'item_list',
@@ -193,7 +193,7 @@ function bibdk_holdingstatus_get_localisation($pids, $ref=NULL) {
     '#type' => 'markup',
     '#markup' => '<p class="note-localisations">' . t("NB! Send your reservation to the library, where you want to pick up the material.", array(), array('context' => 'bibdk_holdingstatus')) . '</p>',
       ) : NULL;
-   
+
   $output['show_all_locations'] = ($count_localisations) ? array(
     'link' => array(
       '#type' => 'link',
@@ -201,7 +201,7 @@ function bibdk_holdingstatus_get_localisation($pids, $ref=NULL) {
       '#href' => current_path() . '/show_all_locations',
     ),
   ) : NULL;
-  
+
   $output['list_localisations'] = array(
     '#items' => $render_agenciesresult,
     '#theme' => 'item_list',
@@ -260,14 +260,19 @@ function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($order
   $query = urldecode($referer['query']);
   $query = explode('&', $query);
   $param = '/null';
-  
+
   if ( in_array('ref=worldcat', $query) ) {
     $param = '/worldcat';
   }
 
-  if( !$subWork->showLocalizationLink() ){
+  // BUG17742: The commented code is not working, when a work has more than one
+  // subwork, because manifestations have not yet been loaded
+  // Therefore this quickfix.
+  // /svi
+
+  /*if( !$subWork->showLocalizationLink() ){
     return bibdk_holdingstatus_no_locations_txt('No_localizaton_txt');
-  }
+  }*/
 
   $lookup_pids = $subWork->getHostPublicationID();
   $url = "overlay/holdings/" . implode(',', $lookup_pids) . $param;

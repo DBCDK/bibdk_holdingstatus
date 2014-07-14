@@ -257,7 +257,7 @@ function bibdk_holdingstatus_get_holdings($agencyIds, $pids) {
 function bibdk_holdingstatus_ting_openformat_subwork_materialtype_actions($ordered_subworks, $type_id, $subtype_id, $subWork) {
 
   $referer = parse_url($_SERVER['HTTP_REFERER']);
-  $query = urldecode($referer['query']);
+  $query = ( isset($referer['query']) ) ? urldecode($referer['query']) : '';
   $query = explode('&', $query);
   $param = '/null';
 

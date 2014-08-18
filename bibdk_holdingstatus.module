@@ -176,6 +176,8 @@ function bibdk_holdingstatus_get_localisation($pids, $ref=NULL) {
   $offset = $num_per_page * $page;
   $render_agenciesresult =  array_slice($render_agencies, $offset, $num_per_page, $preserve_keys = TRUE);
 
+
+
   $output['errors'] = ($error_messages) ? array(
     '#items' => $error_messages,
     '#theme' => 'item_list',
@@ -212,13 +214,49 @@ function bibdk_holdingstatus_get_localisation($pids, $ref=NULL) {
 
   $output['pager_localisations'] = array(
     '#type' => 'markup',
-    '#markup' => theme('pager'),
+    '#markup' => bibdk_holdingstatus_paget($count_localisations, $num_per_page, $render_agenciesresult),
     '#attributes' => array(
       'class' => array('pager-agencies'),
     ),
   );
 
   return $output;
+}
+
+function bibdk_holdingstatus_paget($count_localisations, $num_per_page){
+  pager_default_initialize($count_localisations, $num_per_page);
+  // get current pagenumber
+  $page_no = pager_find_page();
+
+  // wrapper
+  $content['container'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('bibdk-pager'),
+    )
+  );
+
+  if($page_no > 1){
+    $content['container']['first'] = array(
+      '#theme'=>'pager_first',
+      '#prefix' =>'<span class="bibdk-pager-first">',
+      '#suffix' => '</span>',
+    );
+  }
+
+  $content['container']['prev'] = array(
+    '#theme'=>'pager_previous',
+    '#prefix' =>'<span class="bibdk-pager-previous">',
+    '#suffix' => '</span>',
+  );
+
+  $content['container']['next'] =array(
+    '#theme' => 'pager_next',
+    '#prefix' =>'<span class="bibdk-pager-next">',
+    '#suffix' => '</span>',
+  );
+
+  return drupal_render($content);
 }
 
 /**
